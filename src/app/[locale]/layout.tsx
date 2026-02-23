@@ -12,8 +12,23 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const cairo = Cairo({ subsets: ['arabic'], variable: '--font-cairo' })
 
 export const metadata: Metadata = {
-  title: 'Recipe AI',
-  description: 'AI-powered recipe organizer',
+  title: 'Farah AI',
+  description: 'AI-powered recipe organizer — import, generate, and plan meals',
+  metadataBase: new URL('https://farah-ai.vercel.app'),
+  openGraph: {
+    title: 'Farah AI',
+    description: 'AI-powered recipe organizer — import, generate, and plan meals',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Farah AI',
+    description: 'AI-powered recipe organizer — import, generate, and plan meals',
+  },
+  icons: {
+    icon: '/icon.svg',
+    apple: '/apple-icon.png',
+  },
 }
 
 export default async function LocaleLayout({

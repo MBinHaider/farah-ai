@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Farah AI
+
+AI-powered recipe organizer — import, generate, and plan meals.
+
+## Features
+
+- **Import recipes** from YouTube videos, recipe websites, or pasted text
+- **Generate recipes** with AI from a simple description
+- **Meal planning** with weekly calendar
+- **Grocery list** auto-generated from your meal plan
+- **Step-by-step cooking mode** with timers
+- **Bilingual** English and Arabic (RTL) support
+- **Offline-first** with IndexedDB storage
+- **Dark mode** support
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org) 16 (App Router)
+- [Google Gemini](https://ai.google.dev) for AI recipe extraction and generation
+- [Dexie.js](https://dexie.org) (IndexedDB) for offline-first storage
+- [next-intl](https://next-intl.dev) for i18n (English + Arabic)
+- [Tailwind CSS](https://tailwindcss.com) + [Radix UI](https://www.radix-ui.com)
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Add your GEMINI_API_KEY to .env.local
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Description |
+|----------|-------------|
+| `GEMINI_API_KEY` | Google Gemini API key ([get one here](https://aistudio.google.com/apikey)) |
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+### Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-username%2Ffarah-ai&env=GEMINI_API_KEY&envDescription=Google%20Gemini%20API%20key%20for%20AI%20features)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Push this repo to GitHub
+2. Import into [Vercel](https://vercel.com)
+3. Add `GEMINI_API_KEY` in Environment Variables
+4. Deploy
 
-## Deploy on Vercel
+> **Note:** YouTube video import uses `yt-dlp` which is not available on Vercel serverless functions. Video import will gracefully fall back to a text-based message asking users to paste the recipe text. All other features (URL import, text import, AI generation) work fully on Vercel.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev       # Start development server
+npm run build     # Production build
+npm run start     # Start production server
+npm run test      # Run tests
+npm run lint      # Lint code
+```
+
+## License
+
+MIT
