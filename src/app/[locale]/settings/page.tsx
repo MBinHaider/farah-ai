@@ -1,12 +1,12 @@
 'use client'
 
 import { useLocale, useTranslations } from 'next-intl'
-import { useRouter, usePathname } from '@/i18n/routing'
+import { Link, useRouter, usePathname } from '@/i18n/routing'
 import { useTheme } from 'next-themes'
 import { db } from '@/lib/db'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle2, AlertCircle, Download, Upload } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, AlertCircle, Download, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 
 export default function SettingsPage() {
@@ -71,7 +71,15 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">{t('title')}</h1>
+      <div>
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="mb-2 -ms-2">
+            <ArrowLeft className="me-1 h-4 w-4" />
+            {t('title')}
+          </Button>
+        </Link>
+        <h1 className="text-xl font-bold sm:text-2xl">{t('title')}</h1>
+      </div>
 
       {feedback && (
         <div

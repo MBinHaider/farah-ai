@@ -52,7 +52,7 @@ export default function GeneratePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">{t('generate.title')}</h1>
+      <h1 className="text-xl font-bold sm:text-2xl">{t('generate.title')}</h1>
 
       <Card>
         <CardHeader>

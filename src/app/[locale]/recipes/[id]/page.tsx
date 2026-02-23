@@ -41,7 +41,7 @@ export default function RecipeDetailPage() {
       <div className="space-y-6 animate-pulse">
         <div className="space-y-2">
           <div className="h-8 w-24 rounded bg-muted" />
-          <div className="h-8 w-64 rounded bg-muted" />
+          <div className="h-8 w-3/4 max-w-64 rounded bg-muted" />
           <div className="h-4 w-48 rounded bg-muted" />
         </div>
         <div className="aspect-video rounded-lg bg-muted" />
@@ -94,7 +94,7 @@ export default function RecipeDetailPage() {
               {t('common.home')}
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold">{title}</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">{title}</h1>
           <p className="text-muted-foreground">{description}</p>
         </div>
         <Button variant="destructive" size="sm" onClick={handleDelete}>

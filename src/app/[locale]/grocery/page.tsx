@@ -29,7 +29,7 @@ export default function GroceryListPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <ShoppingCart className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">{t('title')}</h1>
       </div>
 
       {items.length === 0 && (

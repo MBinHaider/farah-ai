@@ -24,7 +24,7 @@ export default function Home() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('home.title')}</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">{t('home.title')}</h1>
         <div className="flex gap-2">
           <Link href="/import">
             <Button size="sm">{t('common.import')}</Button>
@@ -41,13 +41,13 @@ export default function Home() {
         placeholder={t('home.search')}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="max-w-md"
+        className="w-full max-w-md"
       />
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-            <BookOpen className="h-10 w-10 text-primary" />
+          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
+            <BookOpen className="h-12 w-12 text-primary" />
           </div>
           <h2 className="text-xl font-semibold">{t('home.emptyTitle')}</h2>
           <p className="mt-2 max-w-sm text-muted-foreground">{t('home.emptySubtitle')}</p>
@@ -67,7 +67,7 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}

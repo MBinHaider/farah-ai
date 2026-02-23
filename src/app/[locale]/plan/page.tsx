@@ -92,7 +92,7 @@ export default function MealPlanPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">{t('thisWeek')}</p>
         </div>
         <Link href="/grocery">
@@ -105,14 +105,14 @@ export default function MealPlanPage() {
 
       {/* Desktop: Weekly Grid */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse rounded-lg">
           <thead>
             <tr>
-              <th className="border p-2 text-start text-sm font-medium text-muted-foreground" />
-              {DAYS.map((day) => (
+              <th className="rounded-tl-lg border border-border/60 bg-muted/50 p-3 text-start text-sm font-medium text-muted-foreground" />
+              {DAYS.map((day, i) => (
                 <th
                   key={day}
-                  className="border p-2 text-center text-sm font-medium"
+                  className={`border border-border/60 bg-muted/50 p-3 text-center text-sm font-semibold ${i === DAYS.length - 1 ? 'rounded-tr-lg' : ''}`}
                 >
                   {dayLabels[day]}
                 </th>
@@ -121,14 +121,14 @@ export default function MealPlanPage() {
           </thead>
           <tbody>
             {SLOTS.map((slot) => (
-              <tr key={slot}>
-                <td className="border p-2 text-sm font-medium text-muted-foreground whitespace-nowrap">
+              <tr key={slot} className="transition-colors hover:bg-muted/30">
+                <td className="border border-border/60 bg-muted/30 p-3 text-sm font-medium text-muted-foreground whitespace-nowrap">
                   {getSlotLabel(slot)}
                 </td>
                 {DAYS.map((day) => {
                   const meal = getMeal(day, slot)
                   return (
-                    <td key={`${day}-${slot}`} className="border p-2 min-w-[120px]">
+                    <td key={`${day}-${slot}`} className="border border-border/60 p-2 min-w-[120px]">
                       {meal ? (
                         <div className="flex items-start justify-between gap-1">
                           <span className="text-xs font-medium leading-tight line-clamp-2">
@@ -174,21 +174,21 @@ export default function MealPlanPage() {
                       {getSlotLabel(slot)}
                     </span>
                     {meal ? (
-                      <div className="flex flex-1 items-center justify-between gap-2 rounded-md bg-muted/50 px-2 py-1">
+                      <div className="flex flex-1 items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2">
                         <span className="text-sm font-medium truncate">
                           {getRecipeTitle(meal.recipeId)}
                         </span>
                         <button
                           onClick={() => handleRemoveMeal(day, slot)}
-                          className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                         >
-                          <X className="h-3 w-3" />
+                          <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ) : (
                       <button
                         onClick={() => openRecipePicker(day, slot)}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-md border-2 border-dashed border-muted-foreground/30 px-2 py-1 text-xs text-muted-foreground/50 hover:border-primary/50 hover:text-primary/70 transition-colors"
+                        className="flex flex-1 items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/30 px-3 py-2 text-xs text-muted-foreground/50 hover:border-primary/50 hover:text-primary/70 transition-colors"
                       >
                         <Plus className="h-3 w-3" />
                       </button>

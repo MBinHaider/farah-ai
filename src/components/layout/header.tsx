@@ -9,7 +9,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-card/80 backdrop-blur-md">
-      <div className="container flex h-14 items-center justify-between px-4">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primary">
           <Image
             src="/logo.png"
@@ -46,7 +46,7 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`text-sm transition-colors hover:text-primary ${
+      className={`rounded-md px-2 py-1 text-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
         isActive ? 'font-semibold text-primary' : 'text-muted-foreground'
       }`}
     >

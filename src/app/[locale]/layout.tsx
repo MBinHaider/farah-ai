@@ -53,7 +53,7 @@ export default async function LocaleLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <NextIntlClientProvider messages={messages}>
             <Header />
-            <main className="container mx-auto px-4 pb-20 pt-4 md:pb-4">
+            <main className="mx-auto max-w-6xl px-4 pb-20 pt-6 md:px-6 md:pb-6">
               {children}
             </main>
             <BottomNav />

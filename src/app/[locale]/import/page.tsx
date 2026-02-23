@@ -63,7 +63,7 @@ export default function ImportPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">{t('import.title')}</h1>
+      <h1 className="text-xl font-bold sm:text-2xl">{t('import.title')}</h1>
 
       <Card>
         <CardHeader>
