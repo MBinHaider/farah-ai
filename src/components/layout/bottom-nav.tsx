@@ -2,11 +2,10 @@
 
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/routing'
-import { Home, Import, Sparkles, Calendar, ShoppingCart } from 'lucide-react'
+import { Home, Settings, Sparkles, Calendar, ShoppingCart } from 'lucide-react'
 
 const navItems = [
   { href: '/' as const, icon: Home, labelKey: 'home' as const },
-  { href: '/import' as const, icon: Import, labelKey: 'import' as const },
   {
     href: '/generate' as const,
     icon: Sparkles,
@@ -18,6 +17,7 @@ const navItems = [
     icon: ShoppingCart,
     labelKey: 'grocery' as const,
   },
+  { href: '/settings' as const, icon: Settings, labelKey: 'settings' as const },
 ]
 
 export function BottomNav() {

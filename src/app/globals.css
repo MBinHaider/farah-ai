@@ -101,7 +101,7 @@
   --destructive: hsl(0 72% 51%);
   --destructive-foreground: hsl(0 0% 100%);
   --border: hsl(30 10% 22%);
-  --input: hsl(30 10% 22%);
+  --input: hsl(30 10% 26%);
   --ring: hsl(142 45% 50%);
   --sidebar: hsl(30 10% 12%);
   --sidebar-foreground: hsl(40 20% 92%);
@@ -124,5 +124,13 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .dark input,
+  .dark textarea,
+  .dark select {
+    background-color: hsl(30 10% 16% / 0.5);
   }
 }

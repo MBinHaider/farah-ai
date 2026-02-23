@@ -6,6 +6,7 @@ import { useRecipes } from '@/hooks/use-recipes'
 import { RecipeCard } from '@/components/recipe-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { BookOpen, Import, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 export default function Home() {
@@ -44,8 +45,26 @@ export default function Home() {
       />
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
-          <p>{t('home.empty')}</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+            <BookOpen className="h-10 w-10 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold">{t('home.emptyTitle')}</h2>
+          <p className="mt-2 max-w-sm text-muted-foreground">{t('home.emptySubtitle')}</p>
+          <div className="mt-6 flex gap-3">
+            <Link href="/import">
+              <Button className="gap-2">
+                <Import className="h-4 w-4" />
+                {t('common.import')}
+              </Button>
+            </Link>
+            <Link href="/generate">
+              <Button variant="secondary" className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                {t('common.generate')}
+              </Button>
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

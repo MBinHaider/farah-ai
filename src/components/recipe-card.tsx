@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Clock, Users } from 'lucide-react'
+import { ChefHat, Clock, Users } from 'lucide-react'
 import type { Recipe } from '@/types/recipe'
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
@@ -14,10 +14,14 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
 
   return (
     <Link href={`/recipes/${recipe.id}` as never}>
-      <Card className="h-full transition-shadow hover:shadow-md">
-        {recipe.image && (
+      <Card className="h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
+        {recipe.image ? (
           <div className="aspect-video overflow-hidden rounded-t-lg">
             <img src={recipe.image} alt={title} className="h-full w-full object-cover" />
+          </div>
+        ) : (
+          <div className="flex aspect-video items-center justify-center rounded-t-lg bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/5">
+            <ChefHat className="h-12 w-12 text-muted-foreground/30" />
           </div>
         )}
         <CardHeader className="pb-2">

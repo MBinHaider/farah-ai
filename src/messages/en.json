@@ -20,6 +20,8 @@
   "home": {
     "title": "My Recipes",
     "empty": "No recipes yet. Import or generate your first recipe!",
+    "emptyTitle": "No recipes yet",
+    "emptySubtitle": "Import a family favorite or let AI generate one for you",
     "search": "Search recipes..."
   },
   "recipe": {
@@ -46,7 +48,11 @@
     "title": "Generate Recipe",
     "placeholder": "Describe the dish you want (e.g., 'healthy chicken pasta for 2 people')",
     "generating": "AI is creating your recipe...",
-    "success": "Recipe generated!"
+    "success": "Recipe generated!",
+    "examplesTitle": "Try an example",
+    "example1": "Healthy chicken pasta for 2",
+    "example2": "Quick 15-min breakfast",
+    "example3": "Traditional Middle Eastern dessert"
   },
   "cook": {
     "step": "Step {current} of {total}",
@@ -75,6 +81,8 @@
     "theme": "Theme",
     "export": "Export Data",
     "importData": "Import Data",
+    "importSuccess": "Data imported successfully!",
+    "importError": "Failed to import data. Please check the file format.",
     "light": "Light",
     "dark": "Dark",
     "system": "System"

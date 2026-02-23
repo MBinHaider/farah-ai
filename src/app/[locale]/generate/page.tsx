@@ -65,6 +65,19 @@ export default function GeneratePage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="description">{t('generate.title')}</Label>
+              <div className="flex flex-wrap gap-2 pb-1">
+                {(['example1', 'example2', 'example3'] as const).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setDescription(t(`generate.${key}`))}
+                    disabled={loading}
+                    className="rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                  >
+                    {t(`generate.${key}`)}
+                  </button>
+                ))}
+              </div>
               <Textarea
                 id="description"
                 placeholder={t('generate.placeholder')}

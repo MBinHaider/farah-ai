@@ -6,8 +6,8 @@ import { useTheme } from 'next-themes'
 import { db } from '@/lib/db'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Download, Upload } from 'lucide-react'
-import { useRef } from 'react'
+import { CheckCircle2, AlertCircle, Download, Upload } from 'lucide-react'
+import { useRef, useState } from 'react'
 
 export default function SettingsPage() {
   const locale = useLocale()
@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   function switchLocale(newLocale: 'en' | 'ar') {
     router.replace(pathname, { locale: newLocale })
@@ -57,9 +58,9 @@ export default function SettingsPage() {
         await db.groceryLists.bulkPut(data.groceryLists)
       }
 
-      alert('Data imported successfully!')
+      setFeedback({ type: 'success', message: t('importSuccess') })
     } catch {
-      alert('Failed to import data. Please check the file format.')
+      setFeedback({ type: 'error', message: t('importError') })
     }
 
     // Reset file input
@@ -71,6 +72,23 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{t('title')}</h1>
+
+      {feedback && (
+        <div
+          className={`flex items-center gap-2 rounded-lg p-3 text-sm ${
+            feedback.type === 'success'
+              ? 'bg-primary/10 text-primary'
+              : 'bg-destructive/10 text-destructive'
+          }`}
+        >
+          {feedback.type === 'success' ? (
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+          ) : (
+            <AlertCircle className="h-4 w-4 shrink-0" />
+          )}
+          {feedback.message}
+        </div>
+      )}
 
       {/* Language */}
       <Card>

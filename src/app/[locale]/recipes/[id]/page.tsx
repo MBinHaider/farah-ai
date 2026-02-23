@@ -38,8 +38,24 @@ export default function RecipeDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
+      <div className="space-y-6 animate-pulse">
+        <div className="space-y-2">
+          <div className="h-8 w-24 rounded bg-muted" />
+          <div className="h-8 w-64 rounded bg-muted" />
+          <div className="h-4 w-48 rounded bg-muted" />
+        </div>
+        <div className="aspect-video rounded-lg bg-muted" />
+        <div className="flex gap-4">
+          <div className="h-5 w-28 rounded bg-muted" />
+          <div className="h-5 w-28 rounded bg-muted" />
+        </div>
+        <div className="h-px bg-muted" />
+        <div className="h-12 w-48 rounded-lg bg-muted" />
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-4 rounded bg-muted" style={{ width: `${80 - i * 10}%` }} />
+          ))}
+        </div>
       </div>
     )
   }
@@ -121,30 +137,34 @@ export default function RecipeDetailPage() {
       <Separator />
 
       {/* Serving adjuster */}
-      <div className="flex items-center gap-4">
-        <Users className="h-5 w-5 text-muted-foreground" />
-        <span className="font-medium">{t('recipe.servings')}:</span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setServings(Math.max(1, servings - 1))}
-            disabled={servings <= 1}
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-          <span className="w-8 text-center font-bold">{servings}</span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setServings(servings + 1)}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <Card>
+        <CardContent className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-muted-foreground" />
+            <span className="font-medium">{t('recipe.servings')}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setServings(Math.max(1, servings - 1))}
+              disabled={servings <= 1}
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <span className="w-8 text-center text-lg font-bold">{servings}</span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setServings(servings + 1)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Ingredients */}
       <Card>
@@ -181,7 +201,7 @@ export default function RecipeDetailPage() {
                 locale === 'ar' && step.instructionAr ? step.instructionAr : step.instruction
               return (
                 <li key={step.order} className="flex gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                     {step.order}
                   </span>
                   <div className="space-y-1">
@@ -207,22 +227,22 @@ export default function RecipeDetailPage() {
             <CardTitle>{t('recipe.nutrition')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <div className="text-center">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-xl bg-muted/60 p-3 text-center">
                 <p className="text-2xl font-bold">{recipe.nutrition.calories}</p>
-                <p className="text-sm text-muted-foreground">kcal</p>
+                <p className="text-xs text-muted-foreground">kcal</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{recipe.nutrition.protein}g</p>
-                <p className="text-sm text-muted-foreground">Protein</p>
+              <div className="rounded-xl bg-green-500/10 p-3 text-center">
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{recipe.nutrition.protein}g</p>
+                <p className="text-xs text-muted-foreground">Protein</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{recipe.nutrition.carbs}g</p>
-                <p className="text-sm text-muted-foreground">Carbs</p>
+              <div className="rounded-xl bg-orange-500/10 p-3 text-center">
+                <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">{recipe.nutrition.carbs}g</p>
+                <p className="text-xs text-muted-foreground">Carbs</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{recipe.nutrition.fat}g</p>
-                <p className="text-sm text-muted-foreground">Fat</p>
+              <div className="rounded-xl bg-orange-500/10 p-3 text-center">
+                <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">{recipe.nutrition.fat}g</p>
+                <p className="text-xs text-muted-foreground">Fat</p>
               </div>
             </div>
           </CardContent>

@@ -8,7 +8,7 @@ export function Header() {
   const t = useTranslations('common')
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-card/80 backdrop-blur-md">
       <div className="container flex h-14 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primary">
           <Image
