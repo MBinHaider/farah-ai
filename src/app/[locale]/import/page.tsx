@@ -23,6 +23,7 @@ export default function ImportPage() {
 
   const hasText = text.trim().length > 0
   const hasUrl = url.trim().length > 0
+  const isVideoLink = hasUrl && /youtube|youtu\.be|tiktok|instagram/.test(url)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -105,6 +106,9 @@ export default function ImportPage() {
                 onChange={(e) => setUrl(e.target.value)}
                 disabled={loading || hasText}
               />
+              <p className="text-xs text-muted-foreground">
+                {t('import.urlHint')}
+              </p>
             </div>
 
             {error && (
@@ -121,7 +125,7 @@ export default function ImportPage() {
               {loading ? (
                 <>
                   <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  {t('import.importing')}
+                  {isVideoLink ? t('import.importingVideo') : t('import.importing')}
                 </>
               ) : (
                 <>

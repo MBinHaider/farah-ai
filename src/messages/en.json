@@ -36,7 +36,9 @@
     "title": "Import Recipe",
     "pasteText": "Paste recipe text",
     "pasteUrl": "Or paste a URL",
+    "urlHint": "Supports YouTube, Instagram, TikTok videos & recipe websites",
     "importing": "AI is extracting your recipe...",
+    "importingVideo": "AI is watching the video and extracting the recipe...",
     "success": "Recipe imported!",
     "error": "Could not parse recipe. Try pasting the text directly."
   },
