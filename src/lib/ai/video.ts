@@ -129,12 +129,34 @@ async function fetchVideoMetadata(videoId: string): Promise<{ title?: string; de
 }
 
 async function fetchTranscriptViaInnerTube(videoId: string): Promise<string> {
-  // Step 1: Get video info via InnerTube API (Android client bypasses data center IP blocks)
+  const CONSENT_COOKIES = 'CONSENT=PENDING+987; SOCS=CAESEwgDEgk2NDcwMTcxMjQaAmVuIAEaBgiA_LyuBg'
+  const WEB_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+
+  // Step 1: Fetch the YouTube watch page to establish a session
+  // This works from data center IPs with consent cookies
+  const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+    headers: { 'User-Agent': WEB_UA, 'Accept-Language': 'en-US,en;q=0.9', 'Cookie': CONSENT_COOKIES },
+  })
+  if (!pageRes.ok) throw new Error('Failed to fetch YouTube page')
+  const html = await pageRes.text()
+
+  // Collect session cookies from the response
+  const setCookies = pageRes.headers.getSetCookie?.() ?? []
+  const sessionCookies = [CONSENT_COOKIES, ...setCookies.map((c: string) => c.split(';')[0])].join('; ')
+
+  // Extract visitor data from the page for authentication
+  const visitorDataMatch = html.match(/"visitorData":"([^"]+)"/)
+  const visitorData = visitorDataMatch?.[1]
+
+  // Step 2: Call InnerTube player API with session cookies + visitor data
+  // The ANDROID client with session context bypasses LOGIN_REQUIRED on data center IPs
   const playerRes = await fetch('https://www.youtube.com/youtubei/v1/player', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; Android 13)',
+      'Cookie': sessionCookies,
+      ...(visitorData ? { 'X-Goog-Visitor-Id': visitorData } : {}),
     },
     body: JSON.stringify({
       context: {
@@ -142,9 +164,14 @@ async function fetchTranscriptViaInnerTube(videoId: string): Promise<string> {
           clientName: 'ANDROID',
           clientVersion: '19.09.37',
           androidSdkVersion: 33,
+          hl: 'en',
+          gl: 'US',
+          ...(visitorData ? { visitorData } : {}),
         },
       },
       videoId,
+      contentCheckOk: true,
+      racyCheckOk: true,
     }),
   })
 
@@ -162,7 +189,7 @@ async function fetchTranscriptViaInnerTube(videoId: string): Promise<string> {
   const track = captionTracks.find((t: { languageCode: string }) => t.languageCode === 'en')
     ?? captionTracks[0]
 
-  // Step 2: Fetch the actual transcript XML
+  // Step 3: Fetch the actual transcript XML
   const transcriptRes = await fetch(track.baseUrl)
   if (!transcriptRes.ok) throw new Error('Failed to fetch transcript')
   const xml = await transcriptRes.text()
