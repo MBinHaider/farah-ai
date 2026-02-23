@@ -1,0 +1,80 @@
+{
+  "common": {
+    "appName": "Recipe AI",
+    "home": "Home",
+    "recipes": "Recipes",
+    "import": "Import",
+    "generate": "Generate",
+    "plan": "Meal Plan",
+    "grocery": "Grocery List",
+    "settings": "Settings",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try Again",
+    "offline": "You are offline"
+  },
+  "home": {
+    "title": "My Recipes",
+    "empty": "No recipes yet. Import or generate your first recipe!",
+    "search": "Search recipes..."
+  },
+  "recipe": {
+    "servings": "Servings",
+    "prepTime": "Prep Time",
+    "cookTime": "Cook Time",
+    "ingredients": "Ingredients",
+    "steps": "Steps",
+    "nutrition": "Nutrition",
+    "startCooking": "Start Cooking",
+    "addRecipe": "Add Recipe"
+  },
+  "import": {
+    "title": "Import Recipe",
+    "pasteText": "Paste recipe text",
+    "pasteUrl": "Or paste a URL",
+    "importing": "AI is extracting your recipe...",
+    "success": "Recipe imported!",
+    "error": "Could not parse recipe. Try pasting the text directly."
+  },
+  "generate": {
+    "title": "Generate Recipe",
+    "placeholder": "Describe the dish you want (e.g., 'healthy chicken pasta for 2 people')",
+    "generating": "AI is creating your recipe...",
+    "success": "Recipe generated!"
+  },
+  "cook": {
+    "step": "Step {current} of {total}",
+    "next": "Next Step",
+    "previous": "Previous",
+    "done": "Done!",
+    "timer": "{minutes} min"
+  },
+  "plan": {
+    "title": "Meal Plan",
+    "thisWeek": "This Week",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "snack": "Snack",
+    "generateGroceryList": "Generate Grocery List"
+  },
+  "grocery": {
+    "title": "Grocery List",
+    "empty": "No items. Plan some meals first!",
+    "allChecked": "All items checked!"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "export": "Export Data",
+    "importData": "Import Data",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  }
+}
