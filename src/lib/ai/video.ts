@@ -259,7 +259,7 @@ async function parseYouTubeViaTranscript(url: string): Promise<ParsedRecipe> {
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   const result = await model.generateContent({
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -287,7 +287,7 @@ async function analyzeVideoWithGemini(videoPath: string): Promise<ParsedRecipe> 
   await waitForProcessing(fileManager, uploadResult.file.name)
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   const prompt = `You are watching a cooking video. Carefully observe everything that happens in the video — the ingredients used, quantities, cooking techniques, timing, and steps.
 
