@@ -7,7 +7,14 @@ const nullableNumber = z.number().nullable().optional().transform((v) => v ?? un
 export const ingredientSchema = z.object({
   name: z.string().min(1),
   nameAr: nullableString,
-  quantity: z.number().min(0).nullable().transform((v) => v ?? 0),
+  quantity: z.union([z.number(), z.string(), z.null()])
+    .transform((v) => {
+      if (v == null) return 0
+      if (typeof v === 'number') return v
+      const n = parseFloat(v)
+      return isNaN(n) ? 0 : n
+    })
+    .pipe(z.number().min(0)),
   unit: z.string().nullable().transform((v) => v ?? ''),
   category: z.string().nullable().transform((v) => v ?? 'other'),
 })
