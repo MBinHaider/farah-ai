@@ -90,12 +90,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(recipe)
       } catch (videoError) {
         const message = videoError instanceof Error ? videoError.message : 'Video processing failed'
-        // Platform-specific errors (TikTok/Instagram login required) — return directly
-        if (message.includes('require login') || message.includes('require authentication')) {
+        // Return user-facing errors directly instead of falling through to weak metadata extraction
+        if (
+          message.includes('require login') ||
+          message.includes('require authentication') ||
+          message.includes('not available in this environment') ||
+          message.includes('Video download failed')
+        ) {
           return NextResponse.json({ error: message }, { status: 400 })
         }
         console.error('Video processing failed, falling back to metadata extraction:', videoError)
-        // For other errors (download failure etc.), fall through to HTML metadata extraction
+        // For other errors, fall through to HTML metadata extraction
       }
     }
 

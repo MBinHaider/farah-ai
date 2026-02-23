@@ -179,15 +179,11 @@ export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
       } finally {
         cleanup()
       }
-    } catch (e) {
-      // yt-dlp not available (e.g., Vercel serverless) — throw a user-friendly error
-      const msg = e instanceof Error ? e.message : ''
-      if (msg.includes('Video download failed') || msg.includes('ENOENT') || msg.includes('not found')) {
-        throw new Error(
-          'Video download is not available in this environment. Please copy the recipe text from the video description and paste it in the text field instead.',
-        )
-      }
-      throw e
+    } catch {
+      // yt-dlp not available (e.g., Vercel serverless) or download failed
+      throw new Error(
+        'Video download is not available in this environment. Please copy the recipe text from the video description and paste it in the text field instead.',
+      )
     }
   }
 
