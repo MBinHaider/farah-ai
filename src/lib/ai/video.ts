@@ -1,6 +1,6 @@
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { YoutubeTranscript } from 'youtube-transcript'
+import { YoutubeTranscript } from '@danielxceron/youtube-transcript'
 import { recipeSchema } from '@/lib/schemas'
 import { buildTranscriptPrompt } from '@/lib/ai/prompts'
 import { execSync } from 'child_process'
