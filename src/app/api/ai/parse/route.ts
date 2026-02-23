@@ -3,6 +3,8 @@ import { parseRecipe } from '@/lib/ai/gemini'
 import { isVideoUrl, parseVideoRecipe } from '@/lib/ai/video'
 import { z } from 'zod'
 
+export const maxDuration = 60
+
 const requestSchema = z.object({
   text: z.string().optional(),
   url: z.string().optional(),

@@ -244,7 +244,8 @@ export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
       // yt-dlp not available (e.g., Vercel serverless) — fall back to transcript
       try {
         return await parseYouTubeViaTranscript(url)
-      } catch {
+      } catch (transcriptError) {
+        console.error('Transcript fallback failed:', transcriptError)
         throw new Error(
           'Could not process this video. The video may not have captions available. Please copy the recipe text from the video description and paste it in the text field instead.',
         )
