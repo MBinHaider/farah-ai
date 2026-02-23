@@ -14,7 +14,7 @@ const cairo = Cairo({ subsets: ['arabic'], variable: '--font-cairo' })
 export const metadata: Metadata = {
   title: 'Farah AI',
   description: 'AI-powered recipe organizer — import, generate, and plan meals',
-  metadataBase: new URL('https://farah-ai.vercel.app'),
+  metadataBase: new URL('https://farah-ai-two.vercel.app'),
   openGraph: {
     title: 'Farah AI',
     description: 'AI-powered recipe organizer — import, generate, and plan meals',
