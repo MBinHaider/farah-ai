@@ -245,9 +245,10 @@ export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
       try {
         return await parseYouTubeViaTranscript(url)
       } catch (transcriptError) {
-        console.error('Transcript fallback failed:', transcriptError)
+        const detail = transcriptError instanceof Error ? transcriptError.message : String(transcriptError)
+        console.error('Transcript fallback failed:', detail)
         throw new Error(
-          'Could not process this video. The video may not have captions available. Please copy the recipe text from the video description and paste it in the text field instead.',
+          `Could not process this video (${detail}). Please copy the recipe text from the video description and paste it in the text field instead.`,
         )
       }
     }
