@@ -1,6 +1,8 @@
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { YoutubeTranscript } from '@danielxceron/youtube-transcript'
+// youtube-transcript package fails on data center IPs (Vercel) because YouTube
+// blocks HTML scraping from non-residential IPs. We use the InnerTube API directly
+// which presents as an Android client and is not blocked.
 import { recipeSchema } from '@/lib/schemas'
 import { buildTranscriptPrompt } from '@/lib/ai/prompts'
 import { execSync } from 'child_process'
@@ -126,14 +128,79 @@ async function fetchVideoMetadata(videoId: string): Promise<{ title?: string; de
   }
 }
 
+async function fetchTranscriptViaInnerTube(videoId: string): Promise<string> {
+  // Step 1: Get video info via InnerTube API (Android client bypasses data center IP blocks)
+  const playerRes = await fetch('https://www.youtube.com/youtubei/v1/player', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; Android 13)',
+    },
+    body: JSON.stringify({
+      context: {
+        client: {
+          clientName: 'ANDROID',
+          clientVersion: '19.09.37',
+          androidSdkVersion: 33,
+        },
+      },
+      videoId,
+    }),
+  })
+
+  if (!playerRes.ok) throw new Error('Failed to fetch video info')
+  const playerData = await playerRes.json()
+
+  const captionTracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks
+  if (!captionTracks?.length) throw new Error('No captions available for this video')
+
+  // Prefer English, fall back to first available track
+  const track = captionTracks.find((t: { languageCode: string }) => t.languageCode === 'en')
+    ?? captionTracks[0]
+
+  // Step 2: Fetch the actual transcript XML
+  const transcriptRes = await fetch(track.baseUrl)
+  if (!transcriptRes.ok) throw new Error('Failed to fetch transcript')
+  const xml = await transcriptRes.text()
+
+  // Step 3: Parse XML transcript
+  // Format uses <p> paragraphs with <s> word segments, or plain <text> elements
+  const decodeEntities = (s: string) => s
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n/g, ' ')
+
+  let textSegments: string[]
+
+  if (xml.includes('<p ')) {
+    // Segmented format: <p><s>word</s><s> word</s></p> (leading spaces inside <s>)
+    textSegments = [...xml.matchAll(/<p [^>]*>([\s\S]*?)<\/p>/g)]
+      .map((m) =>
+        [...m[1].matchAll(/<s[^>]*>([^<]*)<\/s>/g)]
+          .map((w) => decodeEntities(w[1]))
+          .join('')
+          .trim(),
+      )
+      .filter(Boolean)
+  } else {
+    // Simple format: <text>content</text>
+    textSegments = [...xml.matchAll(/<text[^>]*>([\s\S]*?)<\/text>/g)]
+      .map((m) => decodeEntities(m[1]).trim())
+      .filter(Boolean)
+  }
+
+  if (!textSegments.length) throw new Error('Transcript is empty')
+  return textSegments.join(' ')
+}
+
 async function parseYouTubeViaTranscript(url: string): Promise<ParsedRecipe> {
   const videoId = extractVideoId(url)
   if (!videoId) throw new Error('Could not extract video ID from URL')
 
-  const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId)
-  if (!transcriptItems.length) throw new Error('No transcript available for this video')
-
-  const transcript = transcriptItems.map((item) => item.text).join(' ')
+  const transcript = await fetchTranscriptViaInnerTube(videoId)
   const metadata = await fetchVideoMetadata(videoId)
   const prompt = buildTranscriptPrompt(transcript, metadata)
 
