@@ -3,6 +3,9 @@ import { getMessages } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import { Inter, Cairo } from 'next/font/google'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Header } from '@/components/layout/header'
+import { BottomNav } from '@/components/layout/bottom-nav'
 import type { Metadata } from 'next'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -32,9 +35,15 @@ export default async function LocaleLayout({
       <body
         className={`${inter.variable} ${cairo.variable} font-sans antialiased`}
       >
-        <NextIntlClientProvider messages={messages}>
-          {children}
-        </NextIntlClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <NextIntlClientProvider messages={messages}>
+            <Header />
+            <main className="container mx-auto px-4 pb-20 pt-4 md:pb-4">
+              {children}
+            </main>
+            <BottomNav />
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
