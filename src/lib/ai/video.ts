@@ -148,11 +148,15 @@ async function fetchTranscriptViaInnerTube(videoId: string): Promise<string> {
     }),
   })
 
-  if (!playerRes.ok) throw new Error('Failed to fetch video info')
+  if (!playerRes.ok) throw new Error(`InnerTube API returned ${playerRes.status}`)
   const playerData = await playerRes.json()
 
   const captionTracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks
-  if (!captionTracks?.length) throw new Error('No captions available for this video')
+  if (!captionTracks?.length) {
+    const status = playerData?.playabilityStatus?.status ?? 'unknown'
+    const reason = playerData?.playabilityStatus?.reason ?? ''
+    throw new Error(`No captions (status: ${status}, reason: ${reason})`)
+  }
 
   // Prefer English, fall back to first available track
   const track = captionTracks.find((t: { languageCode: string }) => t.languageCode === 'en')
