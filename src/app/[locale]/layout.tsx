@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     description: 'AI-powered recipe organizer — import, generate, and plan meals',
   },
   icons: {
-    icon: '/icon.svg',
+    icon: '/logo.png',
     apple: '/apple-icon.png',
   },
 }
