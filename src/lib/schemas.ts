@@ -20,10 +20,10 @@ export const stepSchema = z.object({
 })
 
 export const nutritionSchema = z.object({
-  calories: z.number().min(0),
-  protein: z.number().min(0),
-  carbs: z.number().min(0),
-  fat: z.number().min(0),
+  calories: z.number().min(0).nullable().transform((v) => v ?? 0),
+  protein: z.number().min(0).nullable().transform((v) => v ?? 0),
+  carbs: z.number().min(0).nullable().transform((v) => v ?? 0),
+  fat: z.number().min(0).nullable().transform((v) => v ?? 0),
   fiber: z.number().min(0).nullable().optional().transform((v) => v ?? undefined),
 })
 
