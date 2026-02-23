@@ -112,44 +112,96 @@ function extractVideoId(url: string): string | null {
   return null
 }
 
-async function fetchVideoMetadata(videoId: string): Promise<{ title?: string; description?: string }> {
-  try {
-    const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`)
-    const html = await res.text()
-    const titleMatch = html.match(/<meta\s+name="title"\s+content="([^"]*)"/)
-      ?? html.match(/<title>([^<]*)<\/title>/)
-    const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]*)"/)
-    return {
-      title: titleMatch?.[1]?.replace(/ - YouTube$/, ''),
-      description: descMatch?.[1],
-    }
-  } catch {
-    return {}
+
+const CONSENT_COOKIES = 'CONSENT=PENDING+987; SOCS=CAESEwgDEgk2NDcwMTcxMjQaAmVuIAEaBgiA_LyuBg'
+const WEB_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+
+function parseTranscriptXml(xml: string): string[] {
+  const decodeEntities = (s: string) => s
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n/g, ' ')
+
+  if (xml.includes('<p ')) {
+    return [...xml.matchAll(/<p [^>]*>([\s\S]*?)<\/p>/g)]
+      .map((m) =>
+        [...m[1].matchAll(/<s[^>]*>([^<]*)<\/s>/g)]
+          .map((w) => decodeEntities(w[1]))
+          .join('')
+          .trim(),
+      )
+      .filter(Boolean)
   }
+  return [...xml.matchAll(/<text[^>]*>([\s\S]*?)<\/text>/g)]
+    .map((m) => decodeEntities(m[1]).trim())
+    .filter(Boolean)
 }
 
-async function fetchTranscriptViaInnerTube(videoId: string): Promise<string> {
-  const CONSENT_COOKIES = 'CONSENT=PENDING+987; SOCS=CAESEwgDEgk2NDcwMTcxMjQaAmVuIAEaBgiA_LyuBg'
-  const WEB_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-
-  // Step 1: Fetch the YouTube watch page to establish a session
-  // This works from data center IPs with consent cookies
-  const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+async function fetchYouTubePage(videoId: string): Promise<{ html: string; sessionCookies: string }> {
+  const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
     headers: { 'User-Agent': WEB_UA, 'Accept-Language': 'en-US,en;q=0.9', 'Cookie': CONSENT_COOKIES },
   })
-  if (!pageRes.ok) throw new Error('Failed to fetch YouTube page')
-  const html = await pageRes.text()
-
-  // Collect session cookies from the response
-  const setCookies = pageRes.headers.getSetCookie?.() ?? []
+  if (!res.ok) throw new Error('Failed to fetch YouTube page')
+  const html = await res.text()
+  const setCookies = res.headers.getSetCookie?.() ?? []
   const sessionCookies = [CONSENT_COOKIES, ...setCookies.map((c: string) => c.split(';')[0])].join('; ')
+  return { html, sessionCookies }
+}
 
-  // Extract visitor data from the page for authentication
+function extractVideoDescription(html: string): string {
+  const parts: string[] = []
+
+  // Extract title
+  const titleMatch = html.match(/<meta\s+name="title"\s+content="([^"]*)"/)
+    ?? html.match(/"title":"([^"]*)"/)
+  if (titleMatch?.[1]) parts.push(`Title: ${titleMatch[1]}`)
+
+  // Extract description from meta tag
+  const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]*)"/)
+  if (descMatch?.[1]) parts.push(`Description: ${descMatch[1]}`)
+
+  // Extract structured description from ytInitialData (contains the full description)
+  const fullDescMatch = html.match(/"attributedDescription":\{"content":"((?:[^"\\]|\\.)*)"/)
+
+  if (fullDescMatch?.[1]) {
+    const desc = fullDescMatch[1]
+      .replace(/\\n/g, '\n')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\')
+    parts.push(`Full description:\n${desc}`)
+  }
+
+  // Extract chapter markers if present
+  const chaptersMatch = html.match(/"macroMarkersListItemRenderer".*?"title".*?"simpleText":"([^"]*)"/)
+  if (chaptersMatch) {
+    const chapterMatches = [...html.matchAll(/"macroMarkersListItemRenderer":\{"title":\{"simpleText":"([^"]*)"\}/g)]
+    if (chapterMatches.length > 0) {
+      parts.push('Chapters: ' + chapterMatches.map((m) => m[1]).join(', '))
+    }
+  }
+
+  return parts.join('\n\n')
+}
+
+async function fetchTranscriptViaInnerTube(videoId: string): Promise<{ transcript: string; metadata: { title?: string; description?: string } }> {
+  // Step 1: Fetch the YouTube watch page (works from data center IPs with consent cookies)
+  const { html, sessionCookies } = await fetchYouTubePage(videoId)
+
+  // Extract metadata from the page
+  const titleMatch = html.match(/<meta\s+name="title"\s+content="([^"]*)"/)
+  const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]*)"/)
+  const metadata = {
+    title: titleMatch?.[1]?.replace(/ - YouTube$/, ''),
+    description: descMatch?.[1],
+  }
+
+  // Step 2: Try InnerTube ANDROID API with session cookies
   const visitorDataMatch = html.match(/"visitorData":"([^"]+)"/)
   const visitorData = visitorDataMatch?.[1]
 
-  // Step 2: Call InnerTube player API with session cookies + visitor data
-  // The ANDROID client with session context bypasses LOGIN_REQUIRED on data center IPs
   const playerRes = await fetch('https://www.youtube.com/youtubei/v1/player', {
     method: 'POST',
     headers: {
@@ -161,78 +213,46 @@ async function fetchTranscriptViaInnerTube(videoId: string): Promise<string> {
     body: JSON.stringify({
       context: {
         client: {
-          clientName: 'ANDROID',
-          clientVersion: '19.09.37',
-          androidSdkVersion: 33,
-          hl: 'en',
-          gl: 'US',
-          ...(visitorData ? { visitorData } : {}),
+          clientName: 'ANDROID', clientVersion: '19.09.37', androidSdkVersion: 33,
+          hl: 'en', gl: 'US', ...(visitorData ? { visitorData } : {}),
         },
       },
-      videoId,
-      contentCheckOk: true,
-      racyCheckOk: true,
+      videoId, contentCheckOk: true, racyCheckOk: true,
     }),
   })
 
-  if (!playerRes.ok) throw new Error(`InnerTube API returned ${playerRes.status}`)
-  const playerData = await playerRes.json()
-
-  const captionTracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks
-  if (!captionTracks?.length) {
-    const status = playerData?.playabilityStatus?.status ?? 'unknown'
-    const reason = playerData?.playabilityStatus?.reason ?? ''
-    throw new Error(`No captions (status: ${status}, reason: ${reason})`)
+  if (playerRes.ok) {
+    const playerData = await playerRes.json()
+    const captionTracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks
+    if (captionTracks?.length) {
+      const track = captionTracks.find((t: { languageCode: string }) => t.languageCode === 'en')
+        ?? captionTracks[0]
+      const transcriptRes = await fetch(track.baseUrl)
+      if (transcriptRes.ok) {
+        const xml = await transcriptRes.text()
+        const segments = parseTranscriptXml(xml)
+        if (segments.length) {
+          return { transcript: segments.join(' '), metadata }
+        }
+      }
+    }
   }
 
-  // Prefer English, fall back to first available track
-  const track = captionTracks.find((t: { languageCode: string }) => t.languageCode === 'en')
-    ?? captionTracks[0]
-
-  // Step 3: Fetch the actual transcript XML
-  const transcriptRes = await fetch(track.baseUrl)
-  if (!transcriptRes.ok) throw new Error('Failed to fetch transcript')
-  const xml = await transcriptRes.text()
-
-  // Step 3: Parse XML transcript
-  // Format uses <p> paragraphs with <s> word segments, or plain <text> elements
-  const decodeEntities = (s: string) => s
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\n/g, ' ')
-
-  let textSegments: string[]
-
-  if (xml.includes('<p ')) {
-    // Segmented format: <p><s>word</s><s> word</s></p> (leading spaces inside <s>)
-    textSegments = [...xml.matchAll(/<p [^>]*>([\s\S]*?)<\/p>/g)]
-      .map((m) =>
-        [...m[1].matchAll(/<s[^>]*>([^<]*)<\/s>/g)]
-          .map((w) => decodeEntities(w[1]))
-          .join('')
-          .trim(),
-      )
-      .filter(Boolean)
-  } else {
-    // Simple format: <text>content</text>
-    textSegments = [...xml.matchAll(/<text[^>]*>([\s\S]*?)<\/text>/g)]
-      .map((m) => decodeEntities(m[1]).trim())
-      .filter(Boolean)
+  // Step 3: InnerTube failed — extract description from the HTML page as fallback
+  // Cooking videos often have the full recipe in the description
+  const videoDescription = extractVideoDescription(html)
+  if (videoDescription.length > 100) {
+    return { transcript: videoDescription, metadata }
   }
 
-  if (!textSegments.length) throw new Error('Transcript is empty')
-  return textSegments.join(' ')
+  throw new Error('Could not extract transcript or description from video')
 }
 
 async function parseYouTubeViaTranscript(url: string): Promise<ParsedRecipe> {
   const videoId = extractVideoId(url)
   if (!videoId) throw new Error('Could not extract video ID from URL')
 
-  const transcript = await fetchTranscriptViaInnerTube(videoId)
-  const metadata = await fetchVideoMetadata(videoId)
+  const { transcript, metadata } = await fetchTranscriptViaInnerTube(videoId)
   const prompt = buildTranscriptPrompt(transcript, metadata)
 
   const apiKey = process.env.GEMINI_API_KEY
