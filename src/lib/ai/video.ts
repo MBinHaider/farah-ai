@@ -1,6 +1,8 @@
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { YoutubeTranscript } from 'youtube-transcript'
 import { recipeSchema } from '@/lib/schemas'
+import { buildTranscriptPrompt } from '@/lib/ai/prompts'
 import { execSync } from 'child_process'
 import { unlinkSync, existsSync, readdirSync } from 'fs'
 import { tmpdir } from 'os'
@@ -95,6 +97,65 @@ async function waitForProcessing(fileManager: GoogleAIFileManager, fileName: str
   }
 }
 
+function extractVideoId(url: string): string | null {
+  const patterns = [
+    /youtube\.com\/watch\?.*v=([^&]+)/,
+    /youtube\.com\/shorts\/([^/?]+)/,
+    /youtu\.be\/([^/?]+)/,
+  ]
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match) return match[1]
+  }
+  return null
+}
+
+async function fetchVideoMetadata(videoId: string): Promise<{ title?: string; description?: string }> {
+  try {
+    const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`)
+    const html = await res.text()
+    const titleMatch = html.match(/<meta\s+name="title"\s+content="([^"]*)"/)
+      ?? html.match(/<title>([^<]*)<\/title>/)
+    const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]*)"/)
+    return {
+      title: titleMatch?.[1]?.replace(/ - YouTube$/, ''),
+      description: descMatch?.[1],
+    }
+  } catch {
+    return {}
+  }
+}
+
+async function parseYouTubeViaTranscript(url: string): Promise<ParsedRecipe> {
+  const videoId = extractVideoId(url)
+  if (!videoId) throw new Error('Could not extract video ID from URL')
+
+  const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId)
+  if (!transcriptItems.length) throw new Error('No transcript available for this video')
+
+  const transcript = transcriptItems.map((item) => item.text).join(' ')
+  const metadata = await fetchVideoMetadata(videoId)
+  const prompt = buildTranscriptPrompt(transcript, metadata)
+
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
+
+  const genAI = new GoogleGenerativeAI(apiKey)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.3,
+      responseMimeType: 'application/json',
+    },
+  })
+
+  const response = result.response.text()
+  const parsed = JSON.parse(response)
+  return recipeSchema.parse(parsed)
+}
+
 async function analyzeVideoWithGemini(videoPath: string): Promise<ParsedRecipe> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
@@ -170,7 +231,7 @@ export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
     )
   }
 
-  // YouTube: download video and analyze with Gemini multimodal
+  // YouTube: try yt-dlp multimodal first, fall back to transcript
   if (isYouTubeUrl(url)) {
     try {
       const { path: videoPath, cleanup } = await downloadVideo(url)
@@ -180,10 +241,14 @@ export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
         cleanup()
       }
     } catch {
-      // yt-dlp not available (e.g., Vercel serverless) or download failed
-      throw new Error(
-        'Video download is not available in this environment. Please copy the recipe text from the video description and paste it in the text field instead.',
-      )
+      // yt-dlp not available (e.g., Vercel serverless) — fall back to transcript
+      try {
+        return await parseYouTubeViaTranscript(url)
+      } catch {
+        throw new Error(
+          'Could not process this video. The video may not have captions available. Please copy the recipe text from the video description and paste it in the text field instead.',
+        )
+      }
     }
   }
 

@@ -50,3 +50,44 @@ Return a JSON object with these fields:
 
 Make the recipe practical, well-balanced, and delicious.`
 }
+
+export function buildTranscriptPrompt(
+  transcript: string,
+  metadata?: { title?: string; description?: string },
+): string {
+  const metaBlock = metadata
+    ? `Video title: "${metadata.title ?? 'Unknown'}"\nVideo description: "${metadata.description ?? ''}"\n\n`
+    : ''
+
+  return `You are a recipe parser. The following is a transcript from a cooking video. Extract the recipe and return it as structured JSON.
+
+${metaBlock}Since this is spoken content from a video, you may need to:
+- Infer exact quantities when the speaker says things like "a handful" or "some"
+- Identify ingredients from context even if not explicitly listed
+- Determine cooking times from verbal cues like "until golden" or "for a few minutes"
+- Organize scattered instructions into logical steps
+
+Return a JSON object with these fields:
+- title (string): Recipe name in English
+- titleAr (string): Recipe name in Arabic
+- description (string): Brief description in English
+- descriptionAr (string): Brief description in Arabic
+- servings (number): Number of servings (estimate from context, default 4)
+- prepTime (number): Preparation time in minutes (estimate if not stated)
+- cookTime (number): Cooking time in minutes (estimate if not stated)
+- cuisine (string): Cuisine type (e.g., "Italian", "Middle Eastern")
+- tags (string[]): Relevant tags
+- ingredients (array): Each with { name, nameAr, quantity, unit, category }
+  - category must be one of: produce, protein, dairy, grain, spice, oil, sweetener, other
+  - Estimate quantities based on spoken instructions
+- steps (array): Each with { order, instruction, instructionAr, duration }
+  - duration is optional, in minutes
+- nutrition (object): { calories, protein, carbs, fat, fiber } per serving (estimate)
+
+Provide both English and Arabic translations for all text fields.
+
+Transcript:
+"""
+${transcript}
+"""`
+}
