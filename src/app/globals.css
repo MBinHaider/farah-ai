@@ -7,8 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-jakarta), var(--font-cairo), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -54,7 +54,7 @@
   --card-foreground: hsl(30 10% 15%);
   --popover: hsl(40 33% 98%);
   --popover-foreground: hsl(30 10% 15%);
-  --primary: hsl(272 45% 48%);
+  --primary: hsl(142 40% 40%);
   --primary-foreground: hsl(0 0% 100%);
   --secondary: hsl(36 70% 55%);
   --secondary-foreground: hsl(30 10% 15%);
@@ -66,17 +66,17 @@
   --destructive-foreground: hsl(0 0% 100%);
   --border: hsl(30 15% 88%);
   --input: hsl(30 15% 88%);
-  --ring: hsl(272 45% 48%);
+  --ring: hsl(142 40% 40%);
   --radius: 0.625rem;
   --sidebar: hsl(40 33% 96%);
   --sidebar-foreground: hsl(30 10% 15%);
-  --sidebar-primary: hsl(272 45% 48%);
+  --sidebar-primary: hsl(142 40% 40%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
   --sidebar-accent: hsl(36 70% 55%);
   --sidebar-accent-foreground: hsl(30 10% 15%);
   --sidebar-border: hsl(30 15% 88%);
-  --sidebar-ring: hsl(272 45% 48%);
-  --chart-1: hsl(272 45% 48%);
+  --sidebar-ring: hsl(142 40% 40%);
+  --chart-1: hsl(142 40% 40%);
   --chart-2: hsl(36 70% 55%);
   --chart-3: hsl(0 72% 51%);
   --chart-4: hsl(40 33% 96%);
@@ -90,7 +90,7 @@
   --card-foreground: hsl(40 20% 92%);
   --popover: hsl(30 10% 10%);
   --popover-foreground: hsl(40 20% 92%);
-  --primary: hsl(272 50% 62%);
+  --primary: hsl(142 45% 50%);
   --primary-foreground: hsl(0 0% 100%);
   --secondary: hsl(36 60% 45%);
   --secondary-foreground: hsl(40 20% 92%);
@@ -101,17 +101,17 @@
   --destructive: hsl(0 72% 51%);
   --destructive-foreground: hsl(0 0% 100%);
   --border: hsl(30 10% 22%);
-  --input: hsl(30 10% 26%);
-  --ring: hsl(272 50% 62%);
+  --input: hsl(30 10% 22%);
+  --ring: hsl(142 45% 50%);
   --sidebar: hsl(30 10% 12%);
   --sidebar-foreground: hsl(40 20% 92%);
-  --sidebar-primary: hsl(272 50% 62%);
+  --sidebar-primary: hsl(142 45% 50%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
   --sidebar-accent: hsl(36 60% 45%);
   --sidebar-accent-foreground: hsl(40 20% 92%);
   --sidebar-border: hsl(30 10% 22%);
-  --sidebar-ring: hsl(272 50% 62%);
-  --chart-1: hsl(272 50% 62%);
+  --sidebar-ring: hsl(142 45% 50%);
+  --chart-1: hsl(142 45% 50%);
   --chart-2: hsl(36 60% 45%);
   --chart-3: hsl(0 72% 51%);
   --chart-4: hsl(30 10% 18%);
@@ -127,10 +127,89 @@
   }
 }
 
-@layer components {
-  .dark input,
-  .dark textarea,
-  .dark select {
-    background-color: hsl(30 10% 16% / 0.5);
-  }
+/* Cooking mode animations */
+@keyframes cook-chop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-8px) rotate(-5deg); }
+  50% { transform: translateY(4px) rotate(2deg); }
+  75% { transform: translateY(-4px) rotate(-2deg); }
+}
+
+@keyframes cook-stir {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes cook-flame {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  25% { transform: scale(1.1) translateY(-2px); opacity: 0.2; }
+  50% { transform: scale(0.95); opacity: 0.12; }
+  75% { transform: scale(1.08) translateY(-3px); opacity: 0.18; }
+}
+
+@keyframes cook-sizzle {
+  0%, 100% { transform: translateX(0) scale(1); }
+  10% { transform: translateX(-2px) scale(1.02); }
+  20% { transform: translateX(2px) scale(0.98); }
+  30% { transform: translateX(-1px) scale(1.01); }
+  40% { transform: translateX(1px) scale(0.99); }
+  50% { transform: translateX(0) scale(1.03); }
+  60% { transform: translateX(-2px) scale(0.97); }
+  70% { transform: translateX(1px) scale(1.02); }
+  80% { transform: translateX(-1px) scale(0.98); }
+  90% { transform: translateX(2px) scale(1.01); }
+}
+
+@keyframes cook-pour {
+  0%, 100% { transform: translateY(0); opacity: 0.15; }
+  50% { transform: translateY(8px); opacity: 0.1; }
+}
+
+@keyframes cook-wait {
+  0%, 100% { transform: scale(1); opacity: 0.12; }
+  50% { transform: scale(1.05); opacity: 0.18; }
+}
+
+@keyframes cook-bounce {
+  0%, 100% { transform: scale(1) translateY(0); }
+  30% { transform: scale(1.1) translateY(-6px); }
+  60% { transform: scale(0.95) translateY(2px); }
+}
+
+@keyframes cook-scatter {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.15; }
+  25% { transform: scale(1.1) rotate(5deg); opacity: 0.2; }
+  50% { transform: scale(0.9) rotate(-5deg); opacity: 0.1; }
+  75% { transform: scale(1.05) rotate(3deg); opacity: 0.18; }
+}
+
+@keyframes cook-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes cook-step-in-right {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes cook-step-in-left {
+  from { transform: translateX(-40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes cook-checkmark {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  50% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes cook-confetti-fall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes cook-ring-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
