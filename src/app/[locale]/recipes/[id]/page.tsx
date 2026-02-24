@@ -232,16 +232,16 @@ export default function RecipeDetailPage() {
                 <p className="text-2xl font-bold">{recipe.nutrition.calories}</p>
                 <p className="text-xs text-muted-foreground">kcal</p>
               </div>
-              <div className="rounded-xl bg-green-500/10 p-3 text-center">
-                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{recipe.nutrition.protein}g</p>
+              <div className="rounded-xl bg-purple-500/10 p-3 text-center">
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{recipe.nutrition.protein}g</p>
                 <p className="text-xs text-muted-foreground">Protein</p>
               </div>
-              <div className="rounded-xl bg-orange-500/10 p-3 text-center">
-                <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">{recipe.nutrition.carbs}g</p>
+              <div className="rounded-xl bg-violet-500/10 p-3 text-center">
+                <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{recipe.nutrition.carbs}g</p>
                 <p className="text-xs text-muted-foreground">Carbs</p>
               </div>
-              <div className="rounded-xl bg-orange-500/10 p-3 text-center">
-                <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">{recipe.nutrition.fat}g</p>
+              <div className="rounded-xl bg-fuchsia-500/10 p-3 text-center">
+                <p className="text-2xl font-bold text-fuchsia-600 dark:text-fuchsia-400">{recipe.nutrition.fat}g</p>
                 <p className="text-xs text-muted-foreground">Fat</p>
               </div>
             </div>
