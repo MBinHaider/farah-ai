@@ -6,14 +6,21 @@ import { useRecipes } from '@/hooks/use-recipes'
 import { RecipeCard } from '@/components/recipe-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { BookOpen, Import, Sparkles, Film, CookingPot, Salad } from 'lucide-react'
+import { BookOpen, Import, Sparkles, Film, CookingPot, Salad, ChefHat, Star } from 'lucide-react'
 import { useState } from 'react'
+import { useLocale } from 'next-intl'
 import { isVideoUrl } from '@/lib/video-utils'
 
 export default function Home() {
   const t = useTranslations()
+  const locale = useLocale()
   const { recipes } = useRecipes()
   const [search, setSearch] = useState('')
+
+  // Featured recipe (tagged 'featured')
+  const featuredRecipe = recipes.find((r) =>
+    r.tags.some((tag) => tag.toLowerCase() === 'featured'),
+  )
 
   // Section filters
   const videoRecipes = recipes.filter(
@@ -76,6 +83,57 @@ export default function Home() {
         </div>
       ) : (
         <>
+          {/* Featured hero card */}
+          {featuredRecipe && (
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <Star className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">{t('home.featured')}</h2>
+              </div>
+              <Link href={`/recipes/${featuredRecipe.id}` as never}>
+                <div className="group overflow-hidden rounded-2xl bg-card shadow-sm transition-all duration-200 hover:shadow-lg sm:grid sm:grid-cols-2">
+                  {/* Image — full width on mobile, left half on desktop */}
+                  {featuredRecipe.image ? (
+                    <div className="aspect-video overflow-hidden sm:aspect-auto sm:h-full">
+                      <img
+                        src={featuredRecipe.image}
+                        alt={
+                          locale === 'ar' && featuredRecipe.titleAr
+                            ? featuredRecipe.titleAr
+                            : featuredRecipe.title
+                        }
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/5 sm:aspect-auto sm:h-full">
+                      <ChefHat className="h-16 w-16 text-muted-foreground/30" />
+                    </div>
+                  )}
+                  {/* Text — below on mobile, right half on desktop */}
+                  <div className="flex flex-col justify-center gap-2 p-4 sm:p-6">
+                    <h3 className="text-xl font-bold sm:text-2xl">
+                      {locale === 'ar' && featuredRecipe.titleAr
+                        ? featuredRecipe.titleAr
+                        : featuredRecipe.title}
+                    </h3>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">
+                      {locale === 'ar' && featuredRecipe.descriptionAr
+                        ? featuredRecipe.descriptionAr
+                        : featuredRecipe.description}
+                    </p>
+                    <div className="mt-1">
+                      <Button size="sm" className="gap-2">
+                        <ChefHat className="h-4 w-4" />
+                        {t('home.cookNow')}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </section>
+          )}
+
           {/* From Videos section */}
           {videoRecipes.length > 0 && (
             <section>

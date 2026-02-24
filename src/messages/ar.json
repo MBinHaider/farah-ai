@@ -24,7 +24,9 @@
     "fromVideos": "من الفيديوهات",
     "soups": "الشوربات",
     "salads": "السلطات",
-    "allRecipes": "جميع الوصفات"
+    "allRecipes": "جميع الوصفات",
+    "featured": "الوصفة المميزة",
+    "cookNow": "اطبخ الآن"
   },
   "recipe": {
     "servings": "الحصص",

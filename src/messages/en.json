@@ -24,7 +24,9 @@
     "fromVideos": "From Videos",
     "soups": "Soups",
     "salads": "Salads",
-    "allRecipes": "All Recipes"
+    "allRecipes": "All Recipes",
+    "featured": "Featured Recipe",
+    "cookNow": "Cook Now"
   },
   "recipe": {
     "servings": "Servings",

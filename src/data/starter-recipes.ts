@@ -1,6 +1,102 @@
 import type { Recipe } from '@/types/recipe'
 
+export const SEED_VERSION = 2
+
 export const STARTER_RECIPES: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>[] = [
+  // --- FEATURED ---
+  {
+    title: 'Cream Chicken Soup with Corn',
+    titleAr: 'شوربة دجاج بالكريمة والذرة',
+    description: 'A rich and velvety cream soup loaded with tender chicken and sweet corn.',
+    descriptionAr: 'شوربة كريمية غنية وناعمة محملة بالدجاج الطري والذرة الحلوة.',
+    image: 'https://images.pexels.com/photos/4103375/pexels-photo-4103375.jpeg?auto=compress&cs=tinysrgb&w=800',
+    servings: 4,
+    prepTime: 10,
+    cookTime: 25,
+    cuisine: 'American',
+    tags: ['soup', 'chicken', 'comfort food', 'creamy', 'featured'],
+    source: 'manual',
+    ingredients: [
+      { name: 'Chicken breast', nameAr: 'صدر دجاج', quantity: 400, unit: 'g', category: 'protein' },
+      { name: 'Sweet corn kernels', nameAr: 'ذرة حلوة', quantity: 2, unit: 'cup', category: 'produce' },
+      { name: 'Onion', nameAr: 'بصل', quantity: 1, unit: 'pcs', category: 'produce' },
+      { name: 'Garlic', nameAr: 'ثوم', quantity: 3, unit: 'pcs', category: 'produce' },
+      { name: 'Butter', nameAr: 'زبدة', quantity: 2, unit: 'tbsp', category: 'dairy' },
+      { name: 'All-purpose flour', nameAr: 'دقيق', quantity: 2, unit: 'tbsp', category: 'grain' },
+      { name: 'Chicken broth', nameAr: 'مرق دجاج', quantity: 3, unit: 'cup', category: 'other' },
+      { name: 'Heavy cream', nameAr: 'كريمة ثقيلة', quantity: 1, unit: 'cup', category: 'dairy' },
+      { name: 'Salt', nameAr: 'ملح', quantity: 1, unit: 'tsp', category: 'spice' },
+      { name: 'Black pepper', nameAr: 'فلفل أسود', quantity: 0.5, unit: 'tsp', category: 'spice' },
+      { name: 'Dried thyme', nameAr: 'زعتر مجفف', quantity: 0.5, unit: 'tsp', category: 'spice' },
+    ],
+    steps: [
+      {
+        order: 1,
+        instruction: 'Melt butter in a large pot. Sauté diced onion and garlic until fragrant.',
+        instructionAr: 'ذوّب الزبدة في قدر كبير. قلّب البصل المقطع والثوم حتى يصبح عطراً.',
+        duration: 4,
+        actions: [
+          { text: 'Dice the onion and mince the garlic', textAr: 'قطّع البصل وافرم الثوم' },
+          { text: 'Melt butter in a large pot over medium heat', textAr: 'ذوّب الزبدة في قدر كبير على نار متوسطة' },
+          { text: 'Sauté onion and garlic until softened and fragrant', textAr: 'قلّب البصل والثوم حتى يلين ويصبح عطراً' },
+        ],
+        ingredientsUsed: [
+          { name: 'Butter', nameAr: 'زبدة', quantity: '2 tbsp' },
+          { name: 'Onion', nameAr: 'بصل', quantity: '1 diced' },
+          { name: 'Garlic', nameAr: 'ثوم', quantity: '3 cloves' },
+        ],
+      },
+      {
+        order: 2,
+        instruction: 'Stir in flour and cook for 1 minute. Add diced chicken breast and thyme.',
+        instructionAr: 'أضف الدقيق وقلّب لمدة دقيقة. أضف صدر الدجاج المقطع والزعتر.',
+        duration: 3,
+        actions: [
+          { text: 'Sprinkle flour over the onion mixture and stir for 1 minute', textAr: 'رشّ الدقيق فوق خليط البصل وقلّب لمدة دقيقة' },
+          { text: 'Dice the chicken breast into small cubes', textAr: 'قطّع صدر الدجاج إلى مكعبات صغيرة' },
+          { text: 'Add chicken and thyme, cook until chicken turns white', textAr: 'أضف الدجاج والزعتر، اطبخ حتى يبيض الدجاج' },
+        ],
+        ingredientsUsed: [
+          { name: 'All-purpose flour', nameAr: 'دقيق', quantity: '2 tbsp' },
+          { name: 'Chicken breast', nameAr: 'صدر دجاج', quantity: '400g diced' },
+          { name: 'Dried thyme', nameAr: 'زعتر مجفف', quantity: '½ tsp' },
+        ],
+      },
+      {
+        order: 3,
+        instruction: 'Pour in chicken broth and corn. Bring to a boil, then simmer for 15 minutes.',
+        instructionAr: 'أضف مرق الدجاج والذرة. اتركه يغلي ثم خفف النار لمدة 15 دقيقة.',
+        duration: 15,
+        actions: [
+          { text: 'Pour in the chicken broth', textAr: 'أضف مرق الدجاج' },
+          { text: 'Add the corn kernels', textAr: 'أضف حبات الذرة' },
+          { text: 'Bring to a boil, then reduce heat and simmer for 15 minutes', textAr: 'اتركه يغلي ثم خفف النار واتركه يطبخ لمدة 15 دقيقة' },
+        ],
+        ingredientsUsed: [
+          { name: 'Chicken broth', nameAr: 'مرق دجاج', quantity: '3 cups' },
+          { name: 'Sweet corn kernels', nameAr: 'ذرة حلوة', quantity: '2 cups' },
+        ],
+      },
+      {
+        order: 4,
+        instruction: 'Stir in heavy cream, salt, and pepper. Heat through and serve.',
+        instructionAr: 'أضف الكريمة الثقيلة والملح والفلفل. سخّنه وقدّمه.',
+        duration: 3,
+        actions: [
+          { text: 'Reduce heat to low and stir in the heavy cream', textAr: 'خفف النار وأضف الكريمة الثقيلة' },
+          { text: 'Season with salt and black pepper', textAr: 'تبّل بالملح والفلفل الأسود' },
+          { text: 'Heat through gently (do not boil) and serve hot', textAr: 'سخّنه برفق (لا تغلي) وقدّمه ساخناً' },
+        ],
+        ingredientsUsed: [
+          { name: 'Heavy cream', nameAr: 'كريمة ثقيلة', quantity: '1 cup' },
+          { name: 'Salt', nameAr: 'ملح', quantity: '1 tsp' },
+          { name: 'Black pepper', nameAr: 'فلفل أسود', quantity: '½ tsp' },
+        ],
+      },
+    ],
+    nutrition: { calories: 340, protein: 26, carbs: 22, fat: 18, fiber: 2 },
+  },
+
   // --- SOUPS ---
   {
     title: 'Lentil Soup',
