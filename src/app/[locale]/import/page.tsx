@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { useRecipes } from '@/hooks/use-recipes'
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Import } from 'lucide-react'
+import { Loader2, Import, Upload, Info } from 'lucide-react'
 
 export default function ImportPage() {
   const t = useTranslations()
@@ -20,15 +20,24 @@ export default function ImportPage() {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const hasText = text.trim().length > 0
   const hasUrl = url.trim().length > 0
   const isVideoLink = hasUrl && /youtube|youtu\.be|tiktok|instagram/.test(url)
+  const isSocialVideoLink = hasUrl && /tiktok|instagram/.test(url)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    // Don't submit TikTok/Instagram URLs directly — guide user to upload
+    if (isSocialVideoLink) {
+      setLoading(false)
+      return
+    }
 
     try {
       const body: Record<string, string> = {}
@@ -58,6 +67,50 @@ export default function ImportPage() {
       setError(err instanceof Error ? err.message : t('import.error'))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleVideoUpload(file: File) {
+    const MAX_SIZE = 50 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      setError(t('import.fileTooLarge'))
+      return
+    }
+
+    setError('')
+    setLoading(true)
+    setVideoFile(file)
+
+    try {
+      const formData = new FormData()
+      formData.append('video', file)
+
+      const response = await fetch('/api/ai/parse', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || t('import.error'))
+      }
+
+      const recipeData = await response.json()
+      const recipe = await addRecipe({
+        ...recipeData,
+        source: 'import' as const,
+        sourceUrl: hasUrl ? url.trim() : undefined,
+      })
+
+      router.push(`/recipes/${recipe.id}` as never)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'))
+    } finally {
+      setLoading(false)
+      setVideoFile(null)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     }
   }
 
@@ -111,6 +164,42 @@ export default function ImportPage() {
               </p>
             </div>
 
+            {isSocialVideoLink && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <p className="text-sm text-foreground">
+                    {t('import.videoUploadHint')}
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*"
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleVideoUpload(file)
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={loading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="me-2 h-4 w-4" />
+                  {t('import.uploadVideo')}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  {t('import.maxFileSize')}
+                </p>
+              </div>
+            )}
+
             {error && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
@@ -120,12 +209,12 @@ export default function ImportPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || (!hasText && !hasUrl)}
+              disabled={loading || (!hasText && !hasUrl) || isSocialVideoLink}
             >
               {loading ? (
                 <>
                   <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  {isVideoLink ? t('import.importingVideo') : t('import.importing')}
+                  {videoFile ? t('import.uploadingVideo') : isVideoLink ? t('import.importingVideo') : t('import.importing')}
                 </>
               ) : (
                 <>
