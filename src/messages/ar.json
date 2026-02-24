@@ -63,7 +63,9 @@
     "rateRecipe": "كيف كانت؟",
     "shareRecipe": "مشاركة",
     "copied": "تم النسخ!",
-    "backToRecipe": "العودة للوصفة"
+    "backToRecipe": "العودة للوصفة",
+    "youllNeed": "ستحتاج إلى",
+    "actions": "الخطوات"
   },
   "plan": {
     "title": "خطة الوجبات",

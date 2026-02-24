@@ -63,7 +63,9 @@
     "rateRecipe": "How was it?",
     "shareRecipe": "Share",
     "copied": "Copied to clipboard!",
-    "backToRecipe": "Back to Recipe"
+    "backToRecipe": "Back to Recipe",
+    "youllNeed": "You'll need",
+    "actions": "Actions"
   },
   "plan": {
     "title": "Meal Plan",
