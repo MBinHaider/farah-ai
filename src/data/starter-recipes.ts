@@ -1,6 +1,6 @@
 import type { Recipe } from '@/types/recipe'
 
-export const SEED_VERSION = 2
+export const SEED_VERSION = 3
 
 export const STARTER_RECIPES: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>[] = [
   // --- FEATURED ---

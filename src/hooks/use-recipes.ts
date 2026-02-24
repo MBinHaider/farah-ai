@@ -32,8 +32,10 @@ async function seedIfNeeded() {
     }))
     await db.recipes.bulkAdd(recipes)
   } else {
-    // Existing user — only add new recipes (those added after their version)
-    // v1 had 6 recipes (index 1-6), v2 adds the featured recipe at index 0
+    // Existing user — add new recipes and update photos on existing ones
+    const existingRecipes = await db.recipes.toArray()
+
+    // Add new recipes (v1 had 6, v2 adds featured at index 0)
     const newRecipes = STARTER_RECIPES.slice(0, STARTER_RECIPES.length - 6)
     const recipes: Recipe[] = newRecipes.map((data) => ({
       ...data,
@@ -42,6 +44,16 @@ async function seedIfNeeded() {
       updatedAt: now,
     }))
     if (recipes.length > 0) await db.recipes.bulkAdd(recipes)
+
+    // Update photos on existing starter recipes (match by title)
+    for (const starter of STARTER_RECIPES) {
+      const match = existingRecipes.find(
+        (r) => r.title === starter.title || r.titleAr === starter.titleAr,
+      )
+      if (match && starter.image && match.image !== starter.image) {
+        await db.recipes.update(match.id, { image: starter.image, updatedAt: now })
+      }
+    }
   }
 
   await db.preferences.put({
