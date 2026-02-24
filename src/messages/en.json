@@ -20,7 +20,11 @@
   "home": {
     "title": "My Recipes",
     "empty": "No recipes yet. Import or generate your first recipe!",
-    "search": "Search recipes..."
+    "search": "Search recipes...",
+    "fromVideos": "From Videos",
+    "soups": "Soups",
+    "salads": "Salads",
+    "allRecipes": "All Recipes"
   },
   "recipe": {
     "servings": "Servings",
