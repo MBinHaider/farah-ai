@@ -52,7 +52,10 @@
     "title": "Generate Recipe",
     "placeholder": "Describe the dish you want (e.g., 'healthy chicken pasta for 2 people')",
     "generating": "AI is creating your recipe...",
-    "success": "Recipe generated!"
+    "success": "Recipe generated!",
+    "example1": "Healthy chicken pasta for 2 people",
+    "example2": "Quick 15-minute breakfast",
+    "example3": "Traditional Middle Eastern dessert"
   },
   "cook": {
     "step": "Step {current} of {total}",
@@ -95,6 +98,8 @@
     "importData": "Import Data",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "importSuccess": "Data imported successfully!",
+    "importError": "Could not import data. Check the file format."
   }
 }
