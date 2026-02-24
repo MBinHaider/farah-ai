@@ -62,3 +62,58 @@ describe('ingredientSchema', () => {
     expect(ingredientSchema.safeParse(ingredient).success).toBe(false)
   })
 })
+
+describe('stepSchema — structured sub-steps', () => {
+  it('accepts step with actions array', () => {
+    const step = {
+      order: 1,
+      instruction: 'Slice beef and marinate',
+      actions: [
+        { text: 'Slice beef into thin strips' },
+        { text: 'Marinate with soy sauce', textAr: 'تبّل بصوص الصويا' },
+      ],
+    }
+    const result = stepSchema.safeParse(step)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.actions).toHaveLength(2)
+      expect(result.data.actions![1].textAr).toBe('تبّل بصوص الصويا')
+    }
+  })
+
+  it('accepts step with ingredientsUsed array', () => {
+    const step = {
+      order: 1,
+      instruction: 'Marinate beef',
+      ingredientsUsed: [
+        { name: 'Beef fillet', nameAr: 'فيليه لحم', quantity: '500g' },
+        { name: 'Soy sauce', quantity: '2 tbsp' },
+      ],
+    }
+    const result = stepSchema.safeParse(step)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.ingredientsUsed).toHaveLength(2)
+    }
+  })
+
+  it('defaults actions and ingredientsUsed to empty arrays', () => {
+    const step = { order: 1, instruction: 'Boil water' }
+    const result = stepSchema.safeParse(step)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.actions).toEqual([])
+      expect(result.data.ingredientsUsed).toEqual([])
+    }
+  })
+
+  it('rejects action with empty text', () => {
+    const step = {
+      order: 1,
+      instruction: 'Do stuff',
+      actions: [{ text: '' }],
+    }
+    const result = stepSchema.safeParse(step)
+    expect(result.success).toBe(false)
+  })
+})

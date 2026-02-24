@@ -19,11 +19,24 @@ export const ingredientSchema = z.object({
   category: z.string().nullable().transform((v) => v ?? 'other'),
 })
 
+const stepActionSchema = z.object({
+  text: z.string().min(1),
+  textAr: nullableString,
+})
+
+const stepIngredientSchema = z.object({
+  name: z.string().min(1),
+  nameAr: nullableString,
+  quantity: z.string().default(''),
+})
+
 export const stepSchema = z.object({
   order: z.number().int().min(1),
   instruction: z.string().min(1),
   instructionAr: nullableString,
   duration: nullableNumber,
+  actions: z.array(stepActionSchema).optional().default([]),
+  ingredientsUsed: z.array(stepIngredientSchema).optional().default([]),
 })
 
 export const nutritionSchema = z.object({
