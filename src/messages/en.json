@@ -53,7 +53,17 @@
     "next": "Next Step",
     "previous": "Previous",
     "done": "Done!",
-    "timer": "{minutes} min"
+    "timer": "{minutes} min",
+    "startTimer": "Start {minutes} min timer",
+    "pause": "Pause",
+    "resume": "Resume",
+    "timesUp": "Time's up!",
+    "wellDone": "Well Done!",
+    "youCooked": "You just cooked",
+    "rateRecipe": "How was it?",
+    "shareRecipe": "Share",
+    "copied": "Copied to clipboard!",
+    "backToRecipe": "Back to Recipe"
   },
   "plan": {
     "title": "Meal Plan",

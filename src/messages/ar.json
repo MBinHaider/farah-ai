@@ -53,7 +53,17 @@
     "next": "الخطوة التالية",
     "previous": "السابقة",
     "done": "تم!",
-    "timer": "{minutes} دقيقة"
+    "timer": "{minutes} دقيقة",
+    "startTimer": "ابدأ مؤقت {minutes} دقيقة",
+    "pause": "إيقاف",
+    "resume": "استمرار",
+    "timesUp": "انتهى الوقت!",
+    "wellDone": "أحسنت!",
+    "youCooked": "لقد طبخت للتو",
+    "rateRecipe": "كيف كانت؟",
+    "shareRecipe": "مشاركة",
+    "copied": "تم النسخ!",
+    "backToRecipe": "العودة للوصفة"
   },
   "plan": {
     "title": "خطة الوجبات",

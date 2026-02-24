@@ -17,6 +17,7 @@ export interface Recipe {
   sourceUrl?: string
   createdAt: Date
   updatedAt: Date
+  rating?: number
 }
 
 export interface Ingredient {
