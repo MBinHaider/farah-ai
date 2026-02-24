@@ -279,7 +279,10 @@ async function fetchSupadataTranscript(url: string): Promise<{ transcript: strin
   const apiKey = process.env.SUPADATA_API_KEY
   if (!apiKey) throw new Error('SUPADATA_API_KEY is not set')
 
-  const res = await fetch(`https://api.supadata.ai/v1/transcript?url=${encodeURIComponent(url)}`, {
+  // Strip tracking query params (e.g. ?igsh=..., ?is_from_webapp=...) — the video ID is in the path
+  const cleanUrl = url.split('?')[0]
+
+  const res = await fetch(`https://api.supadata.ai/v1/transcript?url=${encodeURIComponent(cleanUrl)}`, {
     headers: { 'x-api-key': apiKey },
   })
 
