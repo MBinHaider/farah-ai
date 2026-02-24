@@ -274,7 +274,7 @@ async function parseYouTubeViaTranscript(url: string): Promise<ParsedRecipe> {
   return recipeSchema.parse(parsed)
 }
 
-async function analyzeVideoWithGemini(videoPath: string): Promise<ParsedRecipe> {
+export async function analyzeVideoWithGemini(videoPath: string): Promise<ParsedRecipe> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
 
