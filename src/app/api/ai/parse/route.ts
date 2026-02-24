@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseRecipe } from '@/lib/ai/gemini'
-import { isVideoUrl, parseVideoRecipe } from '@/lib/ai/video'
+import { isVideoUrl, parseVideoRecipe, analyzeVideoWithGemini } from '@/lib/ai/video'
 import { z } from 'zod'
+import { writeFile, unlink } from 'fs/promises'
+import { tmpdir } from 'os'
+import { join } from 'path'
 
 export const maxDuration = 60
 
@@ -75,6 +78,59 @@ function extractFromHtml(html: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Handle video file upload (FormData)
+    const contentType = request.headers.get('content-type') || ''
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData()
+      const file = formData.get('video') as File | null
+
+      if (!file) {
+        return NextResponse.json(
+          { error: 'No video file provided' },
+          { status: 400 },
+        )
+      }
+
+      // Validate file size (50MB max)
+      const MAX_SIZE = 50 * 1024 * 1024
+      if (file.size > MAX_SIZE) {
+        return NextResponse.json(
+          { error: 'File is too large. Maximum size is 50MB.' },
+          { status: 400 },
+        )
+      }
+
+      // Validate MIME type
+      if (!file.type.startsWith('video/')) {
+        return NextResponse.json(
+          { error: 'File must be a video' },
+          { status: 400 },
+        )
+      }
+
+      // Write to temp file and process with Gemini
+      const ext = file.name?.match(/\.\w+$/)?.[0]?.toLowerCase() ?? '.mp4'
+      const tempPath = join(tmpdir(), `recipe-upload-${Date.now()}${ext}`)
+      try {
+        const bytes = await file.arrayBuffer()
+        if (bytes.byteLength > MAX_SIZE) {
+          return NextResponse.json(
+            { error: 'File is too large. Maximum size is 50MB.' },
+            { status: 400 },
+          )
+        }
+        await writeFile(tempPath, Buffer.from(bytes))
+        const recipe = await analyzeVideoWithGemini(tempPath)
+        return NextResponse.json(recipe)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Video processing failed'
+        console.error('Video upload processing error:', message)
+        return NextResponse.json({ error: message }, { status: 500 })
+      } finally {
+        try { await unlink(tempPath) } catch {}
+      }
+    }
+
     const body = await request.json()
     const { text, url } = requestSchema.parse(body)
 
