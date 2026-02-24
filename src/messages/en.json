@@ -40,12 +40,7 @@
     "importing": "AI is extracting your recipe...",
     "importingVideo": "AI is watching the video and extracting the recipe...",
     "success": "Recipe imported!",
-    "error": "Could not parse recipe. Try pasting the text directly.",
-    "videoUploadHint": "This platform requires you to save the video first. Upload it here and AI will watch it and extract the recipe.",
-    "uploadVideo": "Upload Video",
-    "maxFileSize": "Max file size: 50MB",
-    "fileTooLarge": "File is too large. Maximum size is 50MB.",
-    "uploadingVideo": "AI is watching your video and extracting the recipe..."
+    "error": "Could not parse recipe. Try pasting the text directly."
   },
   "generate": {
     "title": "Generate Recipe",
