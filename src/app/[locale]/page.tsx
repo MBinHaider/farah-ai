@@ -6,14 +6,27 @@ import { useRecipes } from '@/hooks/use-recipes'
 import { RecipeCard } from '@/components/recipe-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { BookOpen, Import, Sparkles } from 'lucide-react'
+import { BookOpen, Import, Sparkles, Film, CookingPot, Salad } from 'lucide-react'
 import { useState } from 'react'
+import { isVideoUrl } from '@/lib/video-utils'
 
 export default function Home() {
   const t = useTranslations()
   const { recipes } = useRecipes()
   const [search, setSearch] = useState('')
 
+  // Section filters
+  const videoRecipes = recipes.filter(
+    (r) => r.source === 'import' && r.sourceUrl && isVideoUrl(r.sourceUrl),
+  )
+  const soupRecipes = recipes.filter((r) =>
+    r.tags.some((tag) => tag.toLowerCase() === 'soup'),
+  )
+  const saladRecipes = recipes.filter((r) =>
+    r.tags.some((tag) => tag.toLowerCase() === 'salad'),
+  )
+
+  // Search across all recipes
   const filtered = recipes.filter(
     (r) =>
       r.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -22,7 +35,8 @@ export default function Home() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold sm:text-2xl">{t('home.title')}</h1>
         <div className="flex gap-2">
@@ -37,14 +51,8 @@ export default function Home() {
         </div>
       </div>
 
-      <Input
-        placeholder={t('home.search')}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full max-w-md"
-      />
-
-      {filtered.length === 0 ? (
+      {recipes.length === 0 ? (
+        /* Empty state — only when truly empty (before seeding finishes) */
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
             <BookOpen className="h-12 w-12 text-primary" />
@@ -67,11 +75,68 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
-          ))}
-        </div>
+        <>
+          {/* From Videos section */}
+          {videoRecipes.length > 0 && (
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <Film className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">{t('home.fromVideos')}</h2>
+              </div>
+              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {videoRecipes.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Soups section */}
+          {soupRecipes.length > 0 && (
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <CookingPot className="h-5 w-5 text-secondary" />
+                <h2 className="text-lg font-semibold">{t('home.soups')}</h2>
+              </div>
+              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {soupRecipes.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Salads section */}
+          {saladRecipes.length > 0 && (
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <Salad className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">{t('home.salads')}</h2>
+              </div>
+              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {saladRecipes.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* All Recipes section with search */}
+          <section>
+            <h2 className="mb-3 text-lg font-semibold">{t('home.allRecipes')}</h2>
+            <Input
+              placeholder={t('home.search')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="mb-4 w-full max-w-md"
+            />
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filtered.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} />
+              ))}
+            </div>
+          </section>
+        </>
       )}
     </div>
   )

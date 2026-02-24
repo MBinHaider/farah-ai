@@ -14,6 +14,8 @@ import type { z } from 'zod'
 
 type ParsedRecipe = z.infer<typeof recipeSchema>
 
+export { isVideoUrl } from '@/lib/video-utils'
+
 const YOUTUBE_PATTERNS = [
   /youtube\.com\/shorts\//,
   /youtube\.com\/watch/,
@@ -27,10 +29,6 @@ const TIKTOK_PATTERNS = [
 const INSTAGRAM_PATTERNS = [
   /instagram\.com\/(p|reel|reels)\//,
 ]
-
-export function isVideoUrl(url: string): boolean {
-  return [...YOUTUBE_PATTERNS, ...TIKTOK_PATTERNS, ...INSTAGRAM_PATTERNS].some((p) => p.test(url))
-}
 
 function isYouTubeUrl(url: string): boolean {
   return YOUTUBE_PATTERNS.some((p) => p.test(url))
