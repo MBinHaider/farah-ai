@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import {
   X, ChevronLeft, ChevronRight, Play, Pause, Timer,
   Flame, Droplets, ChefHat, Sparkles, Clock, UtensilsCrossed,
-  CookingPot, Check, Share2, ArrowLeft, Star,
+  CookingPot, Check, Share2, ArrowLeft, Star, Square, CircleCheck,
 } from 'lucide-react'
 import type { Recipe } from '@/types/recipe'
 
@@ -217,6 +217,7 @@ export default function CookingModePage() {
   const [completed, setCompleted] = useState(false)
   const [rating, setRating] = useState(0)
   const [shareMessage, setShareMessage] = useState('')
+  const [ingredientChecked, setIngredientChecked] = useState<Record<string, boolean>>({})
 
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState(0)
@@ -243,8 +244,9 @@ export default function CookingModePage() {
   const step = steps[currentStep]
   const isRtl = locale === 'ar'
 
-  // Reset timer when step changes
+  // Reset timer and ingredient checks when step changes
   useEffect(() => {
+    setIngredientChecked({})
     if (intervalRef.current) clearInterval(intervalRef.current)
     setTimerRunning(false)
     setTimerFinished(false)
@@ -493,8 +495,66 @@ export default function CookingModePage() {
             {step.order}
           </div>
 
-          {/* Step instruction */}
-          <p className="max-w-lg text-center text-2xl leading-relaxed">{instruction}</p>
+          {/* Structured sub-steps or plain instruction */}
+          {step.actions && step.actions.length > 0 ? (
+            <div className="flex w-full max-w-lg flex-col gap-4">
+              {/* Ingredient checklist */}
+              {step.ingredientsUsed && step.ingredientsUsed.length > 0 && (
+                <div className="rounded-xl border border-border/60 bg-card/50 p-4">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t('youllNeed')}
+                  </p>
+                  <ul className="space-y-2">
+                    {step.ingredientsUsed.map((ing, idx) => {
+                      const key = `${currentStep}-${idx}`
+                      const checked = ingredientChecked[key] ?? false
+                      const ingName = locale === 'ar' && ing.nameAr ? ing.nameAr : ing.name
+                      return (
+                        <li key={idx}>
+                          <button
+                            type="button"
+                            className="flex w-full items-center gap-2 text-start"
+                            onClick={() =>
+                              setIngredientChecked((prev) => ({ ...prev, [key]: !checked }))
+                            }
+                          >
+                            {checked ? (
+                              <CircleCheck className="h-5 w-5 shrink-0 text-primary" />
+                            ) : (
+                              <Square className="h-5 w-5 shrink-0 text-muted-foreground/40" />
+                            )}
+                            <span className={checked ? 'text-muted-foreground line-through' : ''}>
+                              <span className="font-medium">{ingName}</span>
+                              {ing.quantity && (
+                                <span className="text-muted-foreground"> · {ing.quantity}</span>
+                              )}
+                            </span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
+
+              {/* Numbered actions */}
+              <ol className="space-y-3">
+                {step.actions.map((action, idx) => {
+                  const actionText = locale === 'ar' && action.textAr ? action.textAr : action.text
+                  return (
+                    <li key={idx} className="flex items-start gap-3">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                        {idx + 1}
+                      </span>
+                      <p className="text-lg leading-relaxed pt-0.5">{actionText}</p>
+                    </li>
+                  )
+                })}
+              </ol>
+            </div>
+          ) : (
+            <p className="max-w-lg text-center text-2xl leading-relaxed">{instruction}</p>
+          )}
 
           {/* Timer section */}
           {step.duration && (
