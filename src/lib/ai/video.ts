@@ -9,6 +9,7 @@ import { execSync } from 'child_process'
 import { unlinkSync, existsSync, readdirSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
+import { parseRecipe as parseRecipeFromText } from '@/lib/ai/gemini'
 import type { z } from 'zod'
 
 type ParsedRecipe = z.infer<typeof recipeSchema>
@@ -274,6 +275,40 @@ async function parseYouTubeViaTranscript(url: string): Promise<ParsedRecipe> {
   return recipeSchema.parse(parsed)
 }
 
+async function fetchSupadataTranscript(url: string): Promise<{ transcript: string; metadata: { title?: string } }> {
+  const apiKey = process.env.SUPADATA_API_KEY
+  if (!apiKey) throw new Error('SUPADATA_API_KEY is not set')
+
+  const res = await fetch(`https://api.supadata.ai/v1/transcript?url=${encodeURIComponent(url)}`, {
+    headers: { 'x-api-key': apiKey },
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Supadata API error (${res.status}): ${text}`)
+  }
+
+  const data = await res.json()
+  if (!data.content || !Array.isArray(data.content) || data.content.length === 0) {
+    throw new Error('No transcript available for this video')
+  }
+
+  const transcript = data.content.map((s: { text: string }) => s.text).join(' ')
+  return { transcript, metadata: {} }
+}
+
+async function fetchTikTokCaption(url: string): Promise<string> {
+  const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`)
+  if (!res.ok) throw new Error('TikTok oEmbed failed')
+
+  const data = await res.json()
+  const caption = data.title || ''
+  if (caption.length < 50) {
+    throw new Error('Caption too short to extract a recipe')
+  }
+  return caption
+}
+
 export async function analyzeVideoWithGemini(videoPath: string): Promise<ParsedRecipe> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
@@ -336,16 +371,46 @@ Pay close attention to what ingredients are added, how they are prepared, and th
 }
 
 export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
-  // TikTok and Instagram require authentication — can't download server-side
-  if (isTikTokUrl(url)) {
-    throw new Error(
-      'TikTok videos require login to access. Please copy the recipe text from the video description and paste it in the text field instead.',
-    )
-  }
+  // TikTok and Instagram: extract transcript via Supadata, fallback to oEmbed caption
+  if (isTikTokUrl(url) || isInstagramUrl(url)) {
+    // Primary: Supadata transcript API
+    try {
+      const { transcript, metadata } = await fetchSupadataTranscript(url)
+      const prompt = buildTranscriptPrompt(transcript, metadata)
 
-  if (isInstagramUrl(url)) {
+      const apiKey = process.env.GEMINI_API_KEY
+      if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
+
+      const genAI = new GoogleGenerativeAI(apiKey)
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          responseMimeType: 'application/json',
+        },
+      })
+
+      const response = result.response.text()
+      const parsed = JSON.parse(response)
+      return recipeSchema.parse(parsed)
+    } catch (supadataError) {
+      console.error('Supadata transcript failed:', supadataError)
+    }
+
+    // Fallback for TikTok: oEmbed caption
+    if (isTikTokUrl(url)) {
+      try {
+        const caption = await fetchTikTokCaption(url)
+        return await parseRecipeFromText(caption)
+      } catch (oembedError) {
+        console.error('TikTok oEmbed fallback failed:', oembedError)
+      }
+    }
+
     throw new Error(
-      'Instagram posts require login to access. Please copy the recipe text from the caption and paste it in the text field instead.',
+      'Could not extract recipe from this video. Try pasting the recipe text directly.',
     )
   }
 
