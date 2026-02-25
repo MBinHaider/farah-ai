@@ -304,7 +304,7 @@ async function fetchTikTokCaption(url: string): Promise<string> {
 
   const data = await res.json()
   const caption = data.title || ''
-  if (caption.length < 50) {
+  if (caption.length < 15) {
     throw new Error('Caption too short to extract a recipe')
   }
   return caption
@@ -371,10 +371,24 @@ Pay close attention to what ingredients are added, how they are prepared, and th
   return recipeSchema.parse(parsed)
 }
 
+async function fetchInstagramCaption(url: string): Promise<string> {
+  const cleanUrl = url.split('?')[0]
+  const res = await fetch(`https://www.instagram.com/api/v1/oembed/?url=${encodeURIComponent(cleanUrl)}`)
+  if (!res.ok) throw new Error('Instagram oEmbed failed')
+  const data = await res.json()
+  const caption = data.title || ''
+  if (caption.length < 15) {
+    throw new Error('Caption too short to extract a recipe')
+  }
+  return caption
+}
+
 export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
-  // TikTok and Instagram: extract transcript via Supadata, fallback to oEmbed caption
+  // TikTok and Instagram: try multiple extraction methods
   if (isTikTokUrl(url) || isInstagramUrl(url)) {
-    // Primary: Supadata transcript API
+    const errors: string[] = []
+
+    // Method 1: Supadata transcript API
     try {
       const { transcript, metadata } = await fetchSupadataTranscript(url)
       const prompt = buildTranscriptPrompt(transcript, metadata)
@@ -397,19 +411,38 @@ export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
       const parsed = JSON.parse(response)
       return recipeSchema.parse(parsed)
     } catch (supadataError) {
-      console.error('Supadata transcript failed:', supadataError)
+      const msg = supadataError instanceof Error ? supadataError.message : String(supadataError)
+      console.error('Supadata transcript failed:', msg)
+      errors.push(`Transcript: ${msg}`)
     }
 
-    // Fallback for TikTok: oEmbed caption
-    if (isTikTokUrl(url)) {
+    // Method 2: yt-dlp download + Gemini multimodal (works locally, not on Vercel)
+    try {
+      const { path: videoPath, cleanup } = await downloadVideo(url)
       try {
-        const caption = await fetchTikTokCaption(url)
-        return await parseRecipeFromText(caption)
-      } catch (oembedError) {
-        console.error('TikTok oEmbed fallback failed:', oembedError)
+        return await analyzeVideoWithGemini(videoPath)
+      } finally {
+        cleanup()
       }
+    } catch (dlError) {
+      const msg = dlError instanceof Error ? dlError.message : String(dlError)
+      console.error('Video download fallback failed:', msg)
+      errors.push(`Download: ${msg}`)
     }
 
+    // Method 3: oEmbed caption → AI text parsing
+    try {
+      const caption = isTikTokUrl(url)
+        ? await fetchTikTokCaption(url)
+        : await fetchInstagramCaption(url)
+      return await parseRecipeFromText(caption)
+    } catch (oembedError) {
+      const msg = oembedError instanceof Error ? oembedError.message : String(oembedError)
+      console.error('oEmbed caption fallback failed:', msg)
+      errors.push(`Caption: ${msg}`)
+    }
+
+    console.error('All video extraction methods failed:', errors.join(' | '))
     throw new Error(
       'Could not extract recipe from this video. Try pasting the recipe text directly.',
     )
