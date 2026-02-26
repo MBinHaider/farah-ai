@@ -6,12 +6,20 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { useRecipes } from '@/hooks/use-recipes'
 import { Button } from '@/components/ui/button'
+import { motion, AnimatePresence, type PanInfo } from 'framer-motion'
 import {
   X, ChevronLeft, ChevronRight, Play, Pause, Timer,
   Flame, Droplets, ChefHat, Sparkles, Clock, UtensilsCrossed,
   CookingPot, Check, Share2, ArrowLeft, Star, Square, CircleCheck,
 } from 'lucide-react'
 import type { Recipe } from '@/types/recipe'
+
+// --- Framer Motion step transition variants ---
+const stepVariants = {
+  enter: (direction: number) => ({ x: direction > 0 ? 200 : -200, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (direction: number) => ({ x: direction > 0 ? -200 : 200, opacity: 0 }),
+}
 
 // --- Contextual icon mapping ---
 type CookAction = {
@@ -210,8 +218,7 @@ export default function CookingModePage() {
   const [recipe, setRecipe] = useState<Recipe | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState(0)
-  const [slideDirection, setSlideDirection] = useState<'forward' | 'backward'>('forward')
-  const [animKey, setAnimKey] = useState(0)
+  const [direction, setDirection] = useState(0) // +1 forward, -1 backward
 
   // Completion state
   const [completed, setCompleted] = useState(false)
@@ -225,10 +232,6 @@ export default function CookingModePage() {
   const [timerRunning, setTimerRunning] = useState(false)
   const [timerFinished, setTimerFinished] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  // Swipe support
-  const touchStartX = useRef(0)
-  const touchEndX = useRef(0)
 
   useEffect(() => {
     async function load() {
@@ -286,42 +289,65 @@ export default function CookingModePage() {
 
   const goNext = useCallback(() => {
     if (currentStep < totalSteps - 1) {
-      setSlideDirection('forward')
-      setAnimKey((k) => k + 1)
+      setDirection(isRtl ? -1 : 1)
       setCurrentStep((prev) => prev + 1)
     }
-  }, [currentStep, totalSteps])
+  }, [currentStep, totalSteps, isRtl])
 
   const goPrev = useCallback(() => {
     if (currentStep > 0) {
-      setSlideDirection('backward')
-      setAnimKey((k) => k + 1)
+      setDirection(isRtl ? 1 : -1)
       setCurrentStep((prev) => prev - 1)
     }
-  }, [currentStep])
+  }, [currentStep, isRtl])
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-  }, [])
-
-  const handleTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      touchEndX.current = e.changedTouches[0].clientX
-      const diff = touchStartX.current - touchEndX.current
-      const threshold = 50
-
-      if (Math.abs(diff) < threshold) return
-
+  const handleDragEnd = useCallback(
+    (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const { offset, velocity } = info
       if (isRtl) {
-        if (diff < -threshold) goNext()
-        else if (diff > threshold) goPrev()
+        // RTL: swipe right (positive offset) = next, swipe left (negative) = prev
+        if (offset.x > 100 || velocity.x > 500) goNext()
+        else if (offset.x < -100 || velocity.x < -500) goPrev()
       } else {
-        if (diff > threshold) goNext()
-        else if (diff < -threshold) goPrev()
+        // LTR: swipe left (negative offset) = next, swipe right (positive) = prev
+        if (offset.x < -100 || velocity.x < -500) goNext()
+        else if (offset.x > 100 || velocity.x > 500) goPrev()
       }
     },
     [isRtl, goNext, goPrev],
   )
+
+  // Wake lock: keep screen on during cooking
+  useEffect(() => {
+    let wakeLock: WakeLockSentinel | null = null
+
+    async function acquireWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen')
+        }
+      } catch {
+        // Wake lock not supported or permission denied
+      }
+    }
+
+    acquireWakeLock()
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        acquireWakeLock()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (wakeLock) {
+        wakeLock.release().catch(() => {})
+      }
+    }
+  }, [])
 
   function handleClose() {
     router.back()
@@ -444,22 +470,14 @@ export default function CookingModePage() {
   const cookAction = detectCookAction(step.instruction)
   const ActionIcon = cookAction.icon
 
-  const slideAnim = isRtl
-    ? slideDirection === 'forward' ? 'cook-step-in-left' : 'cook-step-in-right'
-    : slideDirection === 'forward' ? 'cook-step-in-right' : 'cook-step-in-left'
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col bg-background"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Top bar */}
-      <div className="flex items-center justify-between border-b px-4 py-3">
+    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      {/* Top bar — minimal, no border */}
+      <div className="flex items-center justify-between px-4 py-3">
         <span className="text-sm font-medium text-muted-foreground">
           {t('step', { current: currentStep + 1, total: totalSteps })}
         </span>
-        <Button variant="ghost" size="icon" onClick={handleClose}>
+        <Button variant="ghost" size="icon" onClick={handleClose} className="h-11 w-11">
           <X className="h-5 w-5" />
         </Button>
       </div>
@@ -472,7 +490,7 @@ export default function CookingModePage() {
         />
       </div>
 
-      {/* Step content with slide animation */}
+      {/* Step content with Framer Motion drag + AnimatePresence */}
       <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6">
         {/* Contextual background icon */}
         <ActionIcon
@@ -484,126 +502,137 @@ export default function CookingModePage() {
           }}
         />
 
-        {/* Animated step content */}
-        <div
-          key={animKey}
-          className="relative z-10 flex flex-col items-center"
-          style={{ animation: `${slideAnim} 0.3s ease-out` }}
-        >
-          {/* Step number circle */}
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shadow-lg">
-            {step.order}
-          </div>
+        {/* Draggable + animated step content */}
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentStep}
+            custom={direction}
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ type: 'tween', duration: 0.25 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={handleDragEnd}
+            className="relative z-10 flex w-full flex-col items-center"
+          >
+            {/* Step number circle */}
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shadow-lg">
+              {step.order}
+            </div>
 
-          {/* Structured sub-steps or plain instruction */}
-          {step.actions && step.actions.length > 0 ? (
-            <div className="flex w-full max-w-lg flex-col gap-4">
-              {/* Ingredient checklist */}
-              {step.ingredientsUsed && step.ingredientsUsed.length > 0 && (
-                <div className="rounded-xl border border-border/60 bg-card/50 p-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {t('youllNeed')}
-                  </p>
-                  <ul className="space-y-2">
-                    {step.ingredientsUsed.map((ing, idx) => {
-                      const key = `${currentStep}-${idx}`
-                      const checked = ingredientChecked[key] ?? false
-                      const ingName = locale === 'ar' && ing.nameAr ? ing.nameAr : ing.name
-                      return (
-                        <li key={idx}>
-                          <button
-                            type="button"
-                            className="flex w-full items-center gap-2 text-start"
-                            onClick={() =>
-                              setIngredientChecked((prev) => ({ ...prev, [key]: !checked }))
-                            }
-                          >
-                            {checked ? (
-                              <CircleCheck className="h-5 w-5 shrink-0 text-primary" />
-                            ) : (
-                              <Square className="h-5 w-5 shrink-0 text-muted-foreground/40" />
-                            )}
-                            <span className={checked ? 'text-muted-foreground line-through' : ''}>
-                              <span className="font-medium">{ingName}</span>
-                              {ing.quantity && (
-                                <span className="text-muted-foreground"> · {ing.quantity}</span>
+            {/* Structured sub-steps or plain instruction */}
+            {step.actions && step.actions.length > 0 ? (
+              <div className="flex w-full max-w-lg flex-col gap-4">
+                {/* Ingredient checklist */}
+                {step.ingredientsUsed && step.ingredientsUsed.length > 0 && (
+                  <div className="rounded-xl border border-border/60 bg-card/50 p-4">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t('youllNeed')}
+                    </p>
+                    <ul className="space-y-2">
+                      {step.ingredientsUsed.map((ing, idx) => {
+                        const key = `${currentStep}-${idx}`
+                        const checked = ingredientChecked[key] ?? false
+                        const ingName = locale === 'ar' && ing.nameAr ? ing.nameAr : ing.name
+                        return (
+                          <li key={idx}>
+                            <button
+                              type="button"
+                              className="flex w-full items-center gap-2 text-start"
+                              onClick={() =>
+                                setIngredientChecked((prev) => ({ ...prev, [key]: !checked }))
+                              }
+                            >
+                              {checked ? (
+                                <CircleCheck className="h-5 w-5 shrink-0 text-primary" />
+                              ) : (
+                                <Square className="h-5 w-5 shrink-0 text-muted-foreground/40" />
                               )}
-                            </span>
-                          </button>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
-              )}
+                              <span className={checked ? 'text-muted-foreground line-through' : ''}>
+                                <span className="font-medium">{ingName}</span>
+                                {ing.quantity && (
+                                  <span className="text-muted-foreground"> · {ing.quantity}</span>
+                                )}
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                )}
 
-              {/* Numbered actions */}
-              <ol className="space-y-3">
-                {step.actions.map((action, idx) => {
-                  const actionText = locale === 'ar' && action.textAr ? action.textAr : action.text
-                  return (
-                    <li key={idx} className="flex items-start gap-3">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                        {idx + 1}
-                      </span>
-                      <p className="text-lg leading-relaxed pt-0.5">{actionText}</p>
-                    </li>
-                  )
-                })}
-              </ol>
-            </div>
-          ) : (
-            <p className="max-w-lg text-center text-2xl leading-relaxed">{instruction}</p>
-          )}
+                {/* Numbered actions */}
+                <ol className="space-y-3">
+                  {step.actions.map((action, idx) => {
+                    const actionText = locale === 'ar' && action.textAr ? action.textAr : action.text
+                    return (
+                      <li key={idx} className="flex items-start gap-3">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                          {idx + 1}
+                        </span>
+                        <p className="text-lg leading-relaxed pt-0.5">{actionText}</p>
+                      </li>
+                    )
+                  })}
+                </ol>
+              </div>
+            ) : (
+              <p className="max-w-lg text-center text-xl leading-relaxed md:text-2xl">{instruction}</p>
+            )}
 
-          {/* Timer section */}
-          {step.duration && (
-            <div className="mt-8 flex flex-col items-center gap-3">
-              {!timerRunning && !timerFinished && timerSeconds === timerTotal && (
-                <Button onClick={startTimer} variant="outline" className="gap-2">
-                  <Timer className="h-4 w-4" />
-                  {t('startTimer', { minutes: step.duration })}
-                </Button>
-              )}
-
-              {(timerRunning || (timerSeconds > 0 && timerSeconds < timerTotal)) && (
-                <div className="flex flex-col items-center gap-3">
-                  <TimerRing
-                    seconds={timerSeconds}
-                    totalSeconds={timerTotal}
-                    finished={false}
-                  />
-                  <Button onClick={toggleTimer} variant="outline" size="sm" className="gap-2">
-                    {timerRunning ? (
-                      <>
-                        <Pause className="h-4 w-4" />
-                        {t('pause')}
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4" />
-                        {t('resume')}
-                      </>
-                    )}
+            {/* Timer section */}
+            {step.duration && (
+              <div className="mt-8 flex flex-col items-center gap-3">
+                {!timerRunning && !timerFinished && timerSeconds === timerTotal && (
+                  <Button onClick={startTimer} variant="outline" className="gap-2">
+                    <Timer className="h-4 w-4" />
+                    {t('startTimer', { minutes: step.duration })}
                   </Button>
-                </div>
-              )}
+                )}
 
-              {timerFinished && (
-                <div className="flex flex-col items-center gap-1">
-                  <TimerRing seconds={0} totalSeconds={timerTotal} finished />
-                  <p className="mt-2 text-sm font-semibold text-destructive">
-                    {t('timesUp')}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                {(timerRunning || (timerSeconds > 0 && timerSeconds < timerTotal)) && (
+                  <div className="flex flex-col items-center gap-3">
+                    <TimerRing
+                      seconds={timerSeconds}
+                      totalSeconds={timerTotal}
+                      finished={false}
+                    />
+                    <Button onClick={toggleTimer} variant="outline" size="sm" className="gap-2">
+                      {timerRunning ? (
+                        <>
+                          <Pause className="h-4 w-4" />
+                          {t('pause')}
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4" />
+                          {t('resume')}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {timerFinished && (
+                  <div className="flex flex-col items-center gap-1">
+                    <TimerRing seconds={0} totalSeconds={timerTotal} finished />
+                    <p className="mt-2 text-sm font-semibold text-destructive">
+                      {t('timesUp')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* Navigation buttons */}
-      <div className="flex items-center justify-between border-t px-4 py-4">
+      {/* Navigation buttons — no border */}
+      <div className="flex items-center justify-between px-4 py-4">
         <Button
           variant="outline"
           onClick={goPrev}

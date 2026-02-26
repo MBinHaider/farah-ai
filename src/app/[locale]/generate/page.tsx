@@ -6,9 +6,21 @@ import { useRouter } from '@/i18n/routing'
 import { useRecipes } from '@/hooks/use-recipes'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Sparkles } from 'lucide-react'
+
+// --- Shimmer skeleton card for loading state ---
+function ShimmerCard() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border/40 bg-card">
+      <div className="aspect-video w-full animate-shimmer" />
+      <div className="space-y-3 p-4">
+        <div className="h-4 w-3/4 rounded-md animate-shimmer" />
+        <div className="h-3 w-1/2 rounded-md animate-shimmer" />
+      </div>
+    </div>
+  )
+}
 
 export default function GeneratePage() {
   const t = useTranslations()
@@ -51,70 +63,63 @@ export default function GeneratePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-xl font-bold sm:text-2xl">{t('generate.title')}</h1>
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-2">
+      <h1 className="text-2xl font-bold sm:text-3xl">{t('generate.title')}</h1>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            {t('generate.title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="description">{t('generate.title')}</Label>
-              <div className="flex flex-wrap gap-2 pb-1">
-                {(['example1', 'example2', 'example3'] as const).map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setDescription(t(`generate.${key}`))}
-                    disabled={loading}
-                    className="rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-                  >
-                    {t(`generate.${key}`)}
-                  </button>
-                ))}
-              </div>
-              <Textarea
-                id="description"
-                placeholder={t('generate.placeholder')}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={loading}
-                rows={4}
-                className="resize-none"
-              />
-            </div>
-
-            {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading || description.trim().length < 3}
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Suggestion chips */}
+        <div className="flex flex-wrap gap-2">
+          {(['example1', 'example2', 'example3'] as const).map((key) => (
+            <motion.button
+              key={key}
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setDescription(t(`generate.${key}`))}
+              disabled={loading}
+              className="rounded-full bg-muted px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  {t('generate.generating')}
-                </>
-              ) : (
-                <>
-                  <Sparkles className="me-2 h-4 w-4" />
-                  {t('generate.title')}
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              {t(`generate.${key}`)}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Text area — no Card wrapper */}
+        <Textarea
+          placeholder={t('generate.placeholder')}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          disabled={loading}
+          rows={5}
+          className="resize-none text-base"
+        />
+
+        {error && (
+          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {/* Loading: shimmer skeleton cards */}
+        {loading && (
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-muted-foreground">{t('generate.generating')}</p>
+            <div className="grid gap-4">
+              <ShimmerCard />
+              <ShimmerCard />
+            </div>
+          </div>
+        )}
+
+        {/* Generate button — full width, large touch target */}
+        <Button
+          type="submit"
+          className="w-full py-6 text-base"
+          disabled={loading || description.trim().length < 3}
+        >
+          <Sparkles className="me-2 h-5 w-5" />
+          {t('generate.title')}
+        </Button>
+      </form>
     </div>
   )
 }
