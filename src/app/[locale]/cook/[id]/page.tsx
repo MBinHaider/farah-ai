@@ -323,6 +323,10 @@ export default function CookingModePage() {
 
     async function acquireWakeLock() {
       try {
+        if (wakeLock) {
+          await wakeLock.release()
+          wakeLock = null
+        }
         if ('wakeLock' in navigator) {
           wakeLock = await navigator.wakeLock.request('screen')
         }
