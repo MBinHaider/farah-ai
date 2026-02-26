@@ -9,9 +9,12 @@ import { execSync } from 'child_process'
 import { unlinkSync, existsSync, readdirSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
+import { parseRecipe as parseRecipeFromText } from '@/lib/ai/gemini'
 import type { z } from 'zod'
 
 type ParsedRecipe = z.infer<typeof recipeSchema>
+
+export { isVideoUrl } from '@/lib/video-utils'
 
 const YOUTUBE_PATTERNS = [
   /youtube\.com\/shorts\//,
@@ -26,10 +29,6 @@ const TIKTOK_PATTERNS = [
 const INSTAGRAM_PATTERNS = [
   /instagram\.com\/(p|reel|reels)\//,
 ]
-
-export function isVideoUrl(url: string): boolean {
-  return [...YOUTUBE_PATTERNS, ...TIKTOK_PATTERNS, ...INSTAGRAM_PATTERNS].some((p) => p.test(url))
-}
 
 function isYouTubeUrl(url: string): boolean {
   return YOUTUBE_PATTERNS.some((p) => p.test(url))
@@ -274,7 +273,44 @@ async function parseYouTubeViaTranscript(url: string): Promise<ParsedRecipe> {
   return recipeSchema.parse(parsed)
 }
 
-async function analyzeVideoWithGemini(videoPath: string): Promise<ParsedRecipe> {
+async function fetchSupadataTranscript(url: string): Promise<{ transcript: string; metadata: { title?: string } }> {
+  const apiKey = process.env.SUPADATA_API_KEY
+  if (!apiKey) throw new Error('SUPADATA_API_KEY is not set')
+
+  // Strip tracking query params (e.g. ?igsh=..., ?is_from_webapp=...) — the video ID is in the path
+  const cleanUrl = url.split('?')[0]
+
+  const res = await fetch(`https://api.supadata.ai/v1/transcript?url=${encodeURIComponent(cleanUrl)}`, {
+    headers: { 'x-api-key': apiKey },
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Supadata API error (${res.status}): ${text}`)
+  }
+
+  const data = await res.json()
+  if (!data.content || !Array.isArray(data.content) || data.content.length === 0) {
+    throw new Error('No transcript available for this video')
+  }
+
+  const transcript = data.content.map((s: { text: string }) => s.text).join(' ')
+  return { transcript, metadata: {} }
+}
+
+async function fetchTikTokCaption(url: string): Promise<string> {
+  const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`)
+  if (!res.ok) throw new Error('TikTok oEmbed failed')
+
+  const data = await res.json()
+  const caption = data.title || ''
+  if (caption.length < 15) {
+    throw new Error('Caption too short to extract a recipe')
+  }
+  return caption
+}
+
+export async function analyzeVideoWithGemini(videoPath: string): Promise<ParsedRecipe> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
 
@@ -335,17 +371,80 @@ Pay close attention to what ingredients are added, how they are prepared, and th
   return recipeSchema.parse(parsed)
 }
 
-export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
-  // TikTok and Instagram require authentication — can't download server-side
-  if (isTikTokUrl(url)) {
-    throw new Error(
-      'TikTok videos require login to access. Please copy the recipe text from the video description and paste it in the text field instead.',
-    )
+async function fetchInstagramCaption(url: string): Promise<string> {
+  const cleanUrl = url.split('?')[0]
+  const res = await fetch(`https://www.instagram.com/api/v1/oembed/?url=${encodeURIComponent(cleanUrl)}`)
+  if (!res.ok) throw new Error('Instagram oEmbed failed')
+  const data = await res.json()
+  const caption = data.title || ''
+  if (caption.length < 15) {
+    throw new Error('Caption too short to extract a recipe')
   }
+  return caption
+}
 
-  if (isInstagramUrl(url)) {
+export async function parseVideoRecipe(url: string): Promise<ParsedRecipe> {
+  // TikTok and Instagram: try multiple extraction methods
+  if (isTikTokUrl(url) || isInstagramUrl(url)) {
+    const errors: string[] = []
+
+    // Method 1: Supadata transcript API
+    try {
+      const { transcript, metadata } = await fetchSupadataTranscript(url)
+      const prompt = buildTranscriptPrompt(transcript, metadata)
+
+      const apiKey = process.env.GEMINI_API_KEY
+      if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
+
+      const genAI = new GoogleGenerativeAI(apiKey)
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          responseMimeType: 'application/json',
+        },
+      })
+
+      const response = result.response.text()
+      const parsed = JSON.parse(response)
+      return recipeSchema.parse(parsed)
+    } catch (supadataError) {
+      const msg = supadataError instanceof Error ? supadataError.message : String(supadataError)
+      console.error('Supadata transcript failed:', msg)
+      errors.push(`Transcript: ${msg}`)
+    }
+
+    // Method 2: yt-dlp download + Gemini multimodal (works locally, not on Vercel)
+    try {
+      const { path: videoPath, cleanup } = await downloadVideo(url)
+      try {
+        return await analyzeVideoWithGemini(videoPath)
+      } finally {
+        cleanup()
+      }
+    } catch (dlError) {
+      const msg = dlError instanceof Error ? dlError.message : String(dlError)
+      console.error('Video download fallback failed:', msg)
+      errors.push(`Download: ${msg}`)
+    }
+
+    // Method 3: oEmbed caption → AI text parsing
+    try {
+      const caption = isTikTokUrl(url)
+        ? await fetchTikTokCaption(url)
+        : await fetchInstagramCaption(url)
+      return await parseRecipeFromText(caption)
+    } catch (oembedError) {
+      const msg = oembedError instanceof Error ? oembedError.message : String(oembedError)
+      console.error('oEmbed caption fallback failed:', msg)
+      errors.push(`Caption: ${msg}`)
+    }
+
+    console.error('All video extraction methods failed:', errors.join(' | '))
     throw new Error(
-      'Instagram posts require login to access. Please copy the recipe text from the caption and paste it in the text field instead.',
+      'Could not extract recipe from this video. Try pasting the recipe text directly.',
     )
   }
 

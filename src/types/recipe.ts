@@ -17,6 +17,7 @@ export interface Recipe {
   sourceUrl?: string
   createdAt: Date
   updatedAt: Date
+  rating?: number
 }
 
 export interface Ingredient {
@@ -27,11 +28,24 @@ export interface Ingredient {
   category: string
 }
 
+export interface StepAction {
+  text: string
+  textAr?: string
+}
+
+export interface StepIngredient {
+  name: string
+  nameAr?: string
+  quantity: string
+}
+
 export interface Step {
   order: number
   instruction: string
   instructionAr?: string
   duration?: number
+  actions?: StepAction[]
+  ingredientsUsed?: StepIngredient[]
 }
 
 export interface NutritionInfo {

@@ -1,0 +1,14 @@
+{
+  "name": "Farah AI",
+  "short_name": "Farah",
+  "description": "AI-powered recipe organizer — import, generate, and plan meals",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#9b7fd4",
+  "background_color": "#faf8f5",
+  "icons": [
+    { "src": "/logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

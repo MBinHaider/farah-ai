@@ -2,18 +2,22 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
-import { Inter, Cairo } from 'next/font/google'
+import { Plus_Jakarta_Sans, Cairo } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Header } from '@/components/layout/header'
 import { BottomNav } from '@/components/layout/bottom-nav'
+import { InstallPrompt } from '@/components/pwa/install-prompt'
+import { OfflineBanner } from '@/components/pwa/offline-banner'
+import { PageTransition } from '@/components/page-transition'
 import type { Metadata } from 'next'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta' })
 const cairo = Cairo({ subsets: ['arabic'], variable: '--font-cairo' })
 
 export const metadata: Metadata = {
   title: 'Farah AI',
   description: 'AI-powered recipe organizer — import, generate, and plan meals',
+  manifest: '/manifest.json',
   metadataBase: new URL('https://farah-ai-two.vercel.app'),
   openGraph: {
     title: 'Farah AI',
@@ -48,15 +52,19 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${cairo.variable} font-sans antialiased`}
+        className={`${jakarta.variable} ${cairo.variable} font-sans antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <NextIntlClientProvider messages={messages}>
             <Header />
-            <main className="mx-auto max-w-6xl px-4 pb-20 pt-6 md:px-6 md:pb-6">
-              {children}
+            <main className="mx-auto max-w-lg px-4 pb-24 pt-4 md:max-w-6xl md:px-6 md:pb-6">
+              <PageTransition>
+                {children}
+              </PageTransition>
             </main>
             <BottomNav />
+            <InstallPrompt />
+            <OfflineBanner />
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

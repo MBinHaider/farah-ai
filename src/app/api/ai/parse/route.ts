@@ -98,7 +98,8 @@ export async function POST(request: NextRequest) {
           message.includes('require authentication') ||
           message.includes('not available in this environment') ||
           message.includes('Video download failed') ||
-          message.includes('Could not process this video')
+          message.includes('Could not process this video') ||
+          message.includes('Could not extract recipe')
         ) {
           return NextResponse.json({ error: message }, { status: 400 })
         }

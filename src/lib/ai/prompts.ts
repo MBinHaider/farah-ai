@@ -13,8 +13,12 @@ Return a JSON object with these fields:
 - tags (string[]): Relevant tags
 - ingredients (array): Each with { name, nameAr, quantity, unit, category }
   - category must be one of: produce, protein, dairy, grain, spice, oil, sweetener, other
-- steps (array): Each with { order, instruction, instructionAr, duration }
+- steps (array): Each with { order, instruction, instructionAr, duration, actions, ingredientsUsed }
   - duration is optional, in minutes
+  - actions (array): Break the instruction into small discrete sub-actions. Each with { text, textAr }
+    - Example: "Slice beef into thin strips" then "Marinate with soy sauce and pepper" then "Set aside"
+  - ingredientsUsed (array, optional): Ingredients specifically used in THIS step. Each with { name, nameAr, quantity }
+    - quantity is a display string like "2 tbsp" or "500g"
 - nutrition (object): { calories, protein, carbs, fat, fiber } per serving (estimate)
 
 Provide both English and Arabic translations for all text fields.
@@ -43,9 +47,11 @@ Return a JSON object with these fields:
 - ingredients (array): Each with { name, nameAr, quantity, unit, category }
   - category must be one of: produce, protein, dairy, grain, spice, oil, sweetener, other
   - Use standard measurements (g, ml, cup, tbsp, tsp, pcs)
-- steps (array): Each with { order, instruction, instructionAr, duration }
+- steps (array): Each with { order, instruction, instructionAr, duration, actions, ingredientsUsed }
   - Write clear, actionable steps in both English and Arabic
   - Include duration in minutes where relevant
+  - actions (array): Break each step into small discrete sub-actions. Each with { text, textAr }
+  - ingredientsUsed (array, optional): Ingredients specifically used in THIS step. Each with { name, nameAr, quantity }
 - nutrition (object): { calories, protein, carbs, fat, fiber } per serving (estimate)
 
 Make the recipe practical, well-balanced, and delicious.`
@@ -80,8 +86,10 @@ Return a JSON object with these fields:
 - ingredients (array): Each with { name, nameAr, quantity, unit, category }
   - category must be one of: produce, protein, dairy, grain, spice, oil, sweetener, other
   - Estimate quantities based on spoken instructions
-- steps (array): Each with { order, instruction, instructionAr, duration }
+- steps (array): Each with { order, instruction, instructionAr, duration, actions, ingredientsUsed }
   - duration is optional, in minutes
+  - actions (array): Break the instruction into small discrete sub-actions. Each with { text, textAr }
+  - ingredientsUsed (array, optional): Ingredients specifically used in THIS step. Each with { name, nameAr, quantity }
 - nutrition (object): { calories, protein, carbs, fat, fiber } per serving (estimate)
 
 Provide both English and Arabic translations for all text fields.

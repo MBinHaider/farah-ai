@@ -2,50 +2,52 @@
 
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { Link } from '@/i18n/routing'
+import { useRouter } from '@/i18n/routing'
 import { useMealPlan } from '@/hooks/use-meal-plan'
 import { useRecipes } from '@/hooks/use-recipes'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Plus, X, ShoppingCart, Clock } from 'lucide-react'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { motion } from 'framer-motion'
+import { Plus, X, ShoppingCart, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { DayOfWeek, MealSlot } from '@/types/meal-plan'
 
 const DAYS: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner', 'snack']
 
+const SLOT_EMOJI: Record<MealSlot, string> = {
+  breakfast: '\u{1F305}',
+  lunch: '\u{1F37D}\u{FE0F}',
+  dinner: '\u{1F319}',
+  snack: '\u{1F37F}',
+}
+
 const DAY_LABELS_EN: Record<DayOfWeek, string> = {
-  mon: 'Mon',
-  tue: 'Tue',
-  wed: 'Wed',
-  thu: 'Thu',
-  fri: 'Fri',
-  sat: 'Sat',
-  sun: 'Sun',
+  mon: 'Monday',
+  tue: 'Tuesday',
+  wed: 'Wednesday',
+  thu: 'Thursday',
+  fri: 'Friday',
+  sat: 'Saturday',
+  sun: 'Sunday',
 }
 
 const DAY_LABELS_AR: Record<DayOfWeek, string> = {
-  mon: 'الاثنين',
-  tue: 'الثلاثاء',
-  wed: 'الأربعاء',
-  thu: 'الخميس',
-  fri: 'الجمعة',
-  sat: 'السبت',
-  sun: 'الأحد',
+  mon: '\u0627\u0644\u0627\u062B\u0646\u064A\u0646',
+  tue: '\u0627\u0644\u062B\u0644\u0627\u062B\u0627\u0621',
+  wed: '\u0627\u0644\u0623\u0631\u0628\u0639\u0627\u0621',
+  thu: '\u0627\u0644\u062E\u0645\u064A\u0633',
+  fri: '\u0627\u0644\u062C\u0645\u0639\u0629',
+  sat: '\u0627\u0644\u0633\u0628\u062A',
+  sun: '\u0627\u0644\u0623\u062D\u062F',
 }
 
 export default function MealPlanPage() {
   const locale = useLocale()
   const t = useTranslations('plan')
+  const router = useRouter()
   const { mealPlan, addMeal, removeMeal } = useMealPlan()
   const { recipes } = useRecipes()
 
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>('mon')
   const [selectedSlot, setSelectedSlot] = useState<MealSlot>('breakfast')
 
@@ -55,29 +57,28 @@ export default function MealPlanPage() {
     return mealPlan?.meals.find((m) => m.day === day && m.slot === slot)
   }
 
+  function getRecipe(recipeId: string) {
+    return recipes.find((r) => r.id === recipeId)
+  }
+
   function getRecipeTitle(recipeId: string) {
-    const recipe = recipes.find((r) => r.id === recipeId)
+    const recipe = getRecipe(recipeId)
     if (!recipe) return '...'
     return locale === 'ar' && recipe.titleAr ? recipe.titleAr : recipe.title
   }
 
-  function getRecipeTime(recipeId: string) {
-    const recipe = recipes.find((r) => r.id === recipeId)
-    if (!recipe) return 0
-    return recipe.prepTime + recipe.cookTime
-  }
 
   function openRecipePicker(day: DayOfWeek, slot: MealSlot) {
     setSelectedDay(day)
     setSelectedSlot(slot)
-    setDialogOpen(true)
+    setSheetOpen(true)
   }
 
   async function handleSelectRecipe(recipeId: string) {
     const recipe = recipes.find((r) => r.id === recipeId)
     if (!recipe) return
     await addMeal(selectedDay, selectedSlot, recipeId, recipe.servings)
-    setDialogOpen(false)
+    setSheetOpen(false)
   }
 
   async function handleRemoveMeal(day: DayOfWeek, slot: MealSlot) {
@@ -89,98 +90,61 @@ export default function MealPlanPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-lg space-y-4 pb-24 md:max-w-2xl">
+      {/* Week navigation header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold sm:text-2xl">{t('title')}</h1>
+        <button disabled className="rounded-full p-2 text-muted-foreground/30 cursor-default">
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <div className="text-center">
+          <h1 className="text-xl font-bold">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">{t('thisWeek')}</p>
         </div>
-        <Link href="/grocery">
-          <Button variant="outline" className="gap-2">
-            <ShoppingCart className="h-4 w-4" />
-            {t('generateGroceryList')}
-          </Button>
-        </Link>
+        <button disabled className="rounded-full p-2 text-muted-foreground/30 cursor-default">
+          <ChevronRight className="h-5 w-5" />
+        </button>
       </div>
 
-      {/* Desktop: Weekly Grid */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full border-collapse rounded-lg">
-          <thead>
-            <tr>
-              <th className="rounded-tl-lg border border-border/60 bg-muted/50 p-3 text-start text-sm font-medium text-muted-foreground" />
-              {DAYS.map((day, i) => (
-                <th
-                  key={day}
-                  className={`border border-border/60 bg-muted/50 p-3 text-center text-sm font-semibold ${i === DAYS.length - 1 ? 'rounded-tr-lg' : ''}`}
-                >
-                  {dayLabels[day]}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {SLOTS.map((slot) => (
-              <tr key={slot} className="transition-colors hover:bg-muted/30">
-                <td className="border border-border/60 bg-muted/30 p-3 text-sm font-medium text-muted-foreground whitespace-nowrap">
-                  {getSlotLabel(slot)}
-                </td>
-                {DAYS.map((day) => {
-                  const meal = getMeal(day, slot)
-                  return (
-                    <td key={`${day}-${slot}`} className="border border-border/60 p-2 min-w-[120px]">
-                      {meal ? (
-                        <div className="flex items-start justify-between gap-1">
-                          <span className="text-xs font-medium leading-tight line-clamp-2">
-                            {getRecipeTitle(meal.recipeId)}
-                          </span>
-                          <button
-                            onClick={() => handleRemoveMeal(day, slot)}
-                            className="shrink-0 rounded-full p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => openRecipePicker(day, slot)}
-                          className="flex h-8 w-full items-center justify-center rounded border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 hover:border-primary/50 hover:text-primary/70 transition-colors"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile: Day-by-day cards */}
-      <div className="space-y-4 md:hidden">
-        {DAYS.map((day) => (
-          <Card key={day}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{dayLabels[day]}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+      {/* Vertical day sections */}
+      <div className="space-y-3">
+        {DAYS.map((day, dayIndex) => (
+          <motion.div
+            key={day}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: dayIndex * 0.04 }}
+            className="rounded-2xl bg-card p-4 shadow-sm"
+          >
+            <h2 className="mb-3 text-base font-semibold">{dayLabels[day]}</h2>
+            <div className="space-y-2">
               {SLOTS.map((slot) => {
                 const meal = getMeal(day, slot)
+                const recipe = meal ? getRecipe(meal.recipeId) : null
                 return (
-                  <div key={slot} className="flex items-center justify-between gap-2">
-                    <span className="w-20 shrink-0 text-xs text-muted-foreground">
-                      {getSlotLabel(slot)}
-                    </span>
-                    {meal ? (
-                      <div className="flex flex-1 items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2">
-                        <span className="text-sm font-medium truncate">
+                  <div key={slot} className="flex items-center gap-3">
+                    {/* Emoji + slot label */}
+                    <div className="flex w-24 shrink-0 items-center gap-1.5">
+                      <span className="text-base">{SLOT_EMOJI[slot]}</span>
+                      <span className="text-xs text-muted-foreground">{getSlotLabel(slot)}</span>
+                    </div>
+
+                    {meal && recipe ? (
+                      <div className="flex flex-1 items-center gap-2 rounded-xl bg-muted/40 p-2">
+                        {/* Recipe thumbnail */}
+                        {recipe.image && (
+                          <img
+                            src={recipe.image}
+                            alt={getRecipeTitle(meal.recipeId)}
+                            className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                            loading="lazy"
+                          />
+                        )}
+                        <span className="flex-1 truncate text-sm font-medium">
                           {getRecipeTitle(meal.recipeId)}
                         </span>
                         <button
                           onClick={() => handleRemoveMeal(day, slot)}
-                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -188,55 +152,75 @@ export default function MealPlanPage() {
                     ) : (
                       <button
                         onClick={() => openRecipePicker(day, slot)}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/30 px-3 py-2 text-xs text-muted-foreground/50 hover:border-primary/50 hover:text-primary/70 transition-colors"
+                        className="flex flex-1 items-center justify-center gap-1 rounded-xl border-2 border-dashed border-muted-foreground/20 px-3 py-2.5 text-xs text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/70"
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
                 )
               })}
-            </CardContent>
-          </Card>
+            </div>
+          </motion.div>
         ))}
       </div>
 
-      {/* Recipe Picker Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {dayLabels[selectedDay]} - {getSlotLabel(selectedSlot)}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            {recipes.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                No recipes available
-              </p>
-            ) : (
-              recipes.map((recipe) => {
-                const title =
-                  locale === 'ar' && recipe.titleAr ? recipe.titleAr : recipe.title
-                const totalTime = recipe.prepTime + recipe.cookTime
-                return (
-                  <button
-                    key={recipe.id}
-                    onClick={() => handleSelectRecipe(recipe.id)}
-                    className="flex w-full items-center justify-between rounded-lg border p-3 text-start hover:bg-muted/50 transition-colors"
-                  >
-                    <span className="font-medium">{title}</span>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {totalTime}m
-                    </span>
-                  </button>
-                )
-              })
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Sticky View Grocery List CTA */}
+      <div className="fixed inset-x-0 bottom-16 z-40 px-4 pb-2 md:bottom-0 md:pb-4">
+        <div className="mx-auto max-w-lg md:max-w-2xl">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => router.push('/grocery' as never)}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            {t('viewGroceryList')}
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Recipe Picker BottomSheet */}
+      <BottomSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title={`${dayLabels[selectedDay]} \u2014 ${getSlotLabel(selectedSlot)}`}
+      >
+        <div className="space-y-2">
+          {recipes.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              No recipes available
+            </p>
+          ) : (
+            recipes.map((recipe) => {
+              const title =
+                locale === 'ar' && recipe.titleAr ? recipe.titleAr : recipe.title
+              const totalTime = recipe.prepTime + recipe.cookTime
+              return (
+                <motion.button
+                  key={recipe.id}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleSelectRecipe(recipe.id)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-border/50 p-3 text-start transition-colors hover:bg-muted/50"
+                >
+                  {recipe.image && (
+                    <img
+                      src={recipe.image}
+                      alt={title}
+                      className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                  <span className="flex-1 truncate font-medium">{title}</span>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {totalTime}m
+                  </span>
+                </motion.button>
+              )
+            })
+          )}
+        </div>
+      </BottomSheet>
     </div>
   )
 }

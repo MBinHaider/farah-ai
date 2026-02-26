@@ -1,54 +1,56 @@
 'use client'
 
-import { useLocale, useTranslations } from 'next-intl'
+import { useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ChefHat, Clock, Users } from 'lucide-react'
+import { ChefHat, Clock } from 'lucide-react'
+import { motion } from 'framer-motion'
 import type { Recipe } from '@/types/recipe'
 
-export function RecipeCard({ recipe }: { recipe: Recipe }) {
-  const t = useTranslations('recipe')
+interface RecipeCardProps {
+  recipe: Recipe
+  variant?: 'compact' | 'full'
+}
+
+export function RecipeCard({ recipe, variant = 'compact' }: RecipeCardProps) {
   const locale = useLocale()
   const title = locale === 'ar' && recipe.titleAr ? recipe.titleAr : recipe.title
+  const totalTime = recipe.prepTime + recipe.cookTime
 
   return (
     <Link href={`/recipes/${recipe.id}` as never}>
-      <Card className="h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
+      <motion.div
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        className={`overflow-hidden rounded-2xl bg-card shadow-sm transition-shadow hover:shadow-md ${
+          variant === 'compact' ? 'w-40 shrink-0' : 'w-full'
+        }`}
+      >
         {recipe.image ? (
-          <div className="aspect-video overflow-hidden rounded-t-lg">
-            <img src={recipe.image} alt={title} className="h-full w-full object-cover" />
+          <div className={`overflow-hidden ${variant === 'compact' ? 'aspect-[3/4]' : 'aspect-video'}`}>
+            <img
+              src={recipe.image}
+              alt={title}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
           </div>
         ) : (
-          <div className="flex aspect-video items-center justify-center rounded-t-lg bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/5">
-            <ChefHat className="h-12 w-12 text-muted-foreground/30" />
+          <div className={`flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 ${
+            variant === 'compact' ? 'aspect-[3/4]' : 'aspect-video'
+          }`}>
+            <ChefHat className="h-10 w-10 text-muted-foreground/30" />
           </div>
         )}
-        <CardHeader className="pb-2">
-          <CardTitle className="line-clamp-2 text-lg">{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              {recipe.prepTime + recipe.cookTime}m
-            </span>
-            <span className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {recipe.servings}
-            </span>
+        <div className="p-3">
+          <h3 className={`font-semibold leading-tight ${variant === 'compact' ? 'line-clamp-2 text-sm' : 'line-clamp-2 text-base'}`}>
+            {title}
+          </h3>
+          <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span>{totalTime}m</span>
           </div>
-          {recipe.tags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {recipe.tags.slice(0, 3).map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+      </motion.div>
     </Link>
   )
 }
