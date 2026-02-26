@@ -112,5 +112,11 @@
     "system": "System",
     "importSuccess": "Data imported successfully!",
     "importError": "Could not import data. Check the file format."
+  },
+  "pwa": {
+    "install": "Add to Home Screen",
+    "installDescription": "Get the best experience with Farah AI",
+    "dismiss": "Not now",
+    "offline": "You're offline. Your recipes are still available."
   }
 }
