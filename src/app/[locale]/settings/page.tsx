@@ -4,10 +4,21 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Link, useRouter, usePathname } from '@/i18n/routing'
 import { useTheme } from 'next-themes'
 import { db } from '@/lib/db'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, CheckCircle2, AlertCircle, Download, Upload } from 'lucide-react'
+import { motion } from 'framer-motion'
+import {
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  Download,
+  Upload,
+  Globe,
+  Palette,
+  ChevronRight,
+  Info,
+} from 'lucide-react'
 import { useRef, useState } from 'react'
+
+const THEME_ORDER = ['light', 'dark', 'system'] as const
 
 export default function SettingsPage() {
   const locale = useLocale()
@@ -20,6 +31,22 @@ export default function SettingsPage() {
 
   function switchLocale(newLocale: 'en' | 'ar') {
     router.replace(pathname, { locale: newLocale })
+  }
+
+  function toggleLocale() {
+    switchLocale(locale === 'en' ? 'ar' : 'en')
+  }
+
+  function cycleTheme() {
+    const currentIndex = THEME_ORDER.indexOf((theme as typeof THEME_ORDER[number]) || 'system')
+    const nextIndex = (currentIndex + 1) % THEME_ORDER.length
+    setTheme(THEME_ORDER[nextIndex])
+  }
+
+  function getThemeLabel(): string {
+    if (theme === 'light') return t('light')
+    if (theme === 'dark') return t('dark')
+    return t('system')
   }
 
   async function handleExport() {
@@ -70,20 +97,24 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="mx-auto max-w-lg space-y-6 pb-24 md:max-w-2xl">
+      {/* Header */}
+      <div className="flex items-center gap-2">
         <Link href="/">
-          <Button variant="ghost" size="sm" className="mb-2 -ms-2">
-            <ArrowLeft className="me-1 h-4 w-4" />
-            {t('title')}
-          </Button>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted/50"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </motion.button>
         </Link>
-        <h1 className="text-xl font-bold sm:text-2xl">{t('title')}</h1>
+        <h1 className="text-xl font-bold">{t('title')}</h1>
       </div>
 
+      {/* Feedback banner */}
       {feedback && (
         <div
-          className={`flex items-center gap-2 rounded-lg p-3 text-sm ${
+          className={`flex items-center gap-2 rounded-2xl p-3 text-sm ${
             feedback.type === 'success'
               ? 'bg-primary/10 text-primary'
               : 'bg-destructive/10 text-destructive'
@@ -98,95 +129,93 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Language */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('language')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <Button
-              variant={locale === 'en' ? 'default' : 'outline'}
-              onClick={() => switchLocale('en')}
-            >
-              English
-            </Button>
-            <Button
-              variant={locale === 'ar' ? 'default' : 'outline'}
-              onClick={() => switchLocale('ar')}
-            >
-              العربية
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Appearance section */}
+      <div className="overflow-hidden rounded-2xl bg-card">
+        <SettingsRow
+          icon={<Globe className="h-5 w-5 text-blue-500" />}
+          label={t('language')}
+          value={locale === 'en' ? 'English' : '\u0627\u0644\u0639\u0631\u0628\u064A\u0629'}
+          onTap={toggleLocale}
+        />
+        <div className="ms-14 border-t border-border/30" />
+        <SettingsRow
+          icon={<Palette className="h-5 w-5 text-purple-500" />}
+          label={t('theme')}
+          value={getThemeLabel()}
+          onTap={cycleTheme}
+        />
+      </div>
 
-      {/* Theme */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('theme')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <Button
-              variant={theme === 'light' ? 'default' : 'outline'}
-              onClick={() => setTheme('light')}
-            >
-              {t('light')}
-            </Button>
-            <Button
-              variant={theme === 'dark' ? 'default' : 'outline'}
-              onClick={() => setTheme('dark')}
-            >
-              {t('dark')}
-            </Button>
-            <Button
-              variant={theme === 'system' ? 'default' : 'outline'}
-              onClick={() => setTheme('system')}
-            >
-              {t('system')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Data section */}
+      <div className="overflow-hidden rounded-2xl bg-card">
+        <SettingsRow
+          icon={<Download className="h-5 w-5 text-green-500" />}
+          label={t('export')}
+          onTap={handleExport}
+        />
+        <div className="ms-14 border-t border-border/30" />
+        <SettingsRow
+          icon={<Upload className="h-5 w-5 text-orange-500" />}
+          label={t('importData')}
+          onTap={() => fileInputRef.current?.click()}
+        />
+      </div>
 
-      {/* Export */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('export')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={handleExport} variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            {t('export')}
-          </Button>
-        </CardContent>
-      </Card>
+      {/* About section */}
+      <div className="overflow-hidden rounded-2xl bg-card">
+        <SettingsRow
+          icon={<Info className="h-5 w-5 text-muted-foreground" />}
+          label="Version"
+          value="0.1.0"
+          disabled
+        />
+        <div className="ms-14 border-t border-border/30" />
+        <div className="px-4 py-3 text-center text-sm text-muted-foreground">
+          Made with {'\u{1F49C}'}
+        </div>
+      </div>
 
-      {/* Import */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('importData')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImport}
-            className="hidden"
-            id="import-file"
-          />
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload className="h-4 w-4" />
-            {t('importData')}
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        onChange={handleImport}
+        className="hidden"
+        id="import-file"
+      />
     </div>
+  )
+}
+
+function SettingsRow({
+  icon,
+  label,
+  value,
+  onTap,
+  disabled,
+}: {
+  icon: React.ReactNode
+  label: string
+  value?: string
+  onTap?: () => void
+  disabled?: boolean
+}) {
+  return (
+    <motion.button
+      whileTap={disabled ? undefined : { scale: 0.98 }}
+      onClick={disabled ? undefined : onTap}
+      className={`flex w-full items-center gap-3 px-4 py-3 text-start transition-colors ${
+        disabled ? '' : 'active:bg-muted/30'
+      }`}
+      disabled={disabled}
+    >
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center">{icon}</div>
+      <span className="flex-1 text-sm font-medium">{label}</span>
+      {value && (
+        <span className="text-sm text-muted-foreground">{value}</span>
+      )}
+      {!disabled && <ChevronRight className="h-4 w-4 text-muted-foreground/50" />}
+    </motion.button>
   )
 }

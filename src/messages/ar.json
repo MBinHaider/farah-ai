@@ -91,12 +91,15 @@
     "lunch": "غداء",
     "dinner": "عشاء",
     "snack": "وجبة خفيفة",
-    "generateGroceryList": "إنشاء قائمة المشتريات"
+    "generateGroceryList": "إنشاء قائمة المشتريات",
+    "viewGroceryList": "عرض قائمة التسوق"
   },
   "grocery": {
     "title": "قائمة المشتريات",
     "empty": "لا توجد عناصر. خطط لبعض الوجبات أولاً!",
-    "allChecked": "تم تحديد جميع العناصر!"
+    "allChecked": "تم تحديد جميع العناصر!",
+    "progress": "{checked} من {total} عنصر",
+    "share": "مشاركة القائمة"
   },
   "settings": {
     "title": "الإعدادات",

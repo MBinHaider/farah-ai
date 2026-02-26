@@ -91,12 +91,15 @@
     "lunch": "Lunch",
     "dinner": "Dinner",
     "snack": "Snack",
-    "generateGroceryList": "Generate Grocery List"
+    "generateGroceryList": "Generate Grocery List",
+    "viewGroceryList": "View Grocery List"
   },
   "grocery": {
     "title": "Grocery List",
     "empty": "No items. Plan some meals first!",
-    "allChecked": "All items checked!"
+    "allChecked": "All items checked!",
+    "progress": "{checked} of {total} items",
+    "share": "Share List"
   },
   "settings": {
     "title": "Settings",
