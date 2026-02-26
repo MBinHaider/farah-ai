@@ -36,8 +36,15 @@ export function InstallPrompt() {
 
   const handleInstall = async () => {
     if (!deferredPrompt) return
-    await deferredPrompt.prompt()
-    await deferredPrompt.userChoice
+    try {
+      await deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      if (outcome === 'dismissed') {
+        localStorage.setItem(DISMISS_KEY, String(Date.now()))
+      }
+    } catch {
+      // prompt() not supported or failed
+    }
     setDeferredPrompt(null)
     setShow(false)
   }
@@ -51,45 +58,34 @@ export function InstallPrompt() {
     <AnimatePresence>
       {show && (
         <motion.div
+          role="alert"
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed bottom-20 left-4 right-4 z-50 mx-auto max-w-lg rounded-2xl border p-4 shadow-lg md:bottom-6"
-          style={{
-            backgroundColor: 'var(--card)',
-            borderColor: 'var(--border)',
-          }}
+          className="fixed bottom-20 left-4 right-4 z-50 mx-auto max-w-lg rounded-2xl border border-border bg-card p-4 shadow-lg md:bottom-6"
         >
           <div className="flex items-start gap-3">
-            <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-              style={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
-            >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Download className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold" style={{ color: 'var(--foreground)' }}>
+              <p className="font-semibold text-foreground">
                 {t('install')}
               </p>
-              <p className="mt-0.5 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 {t('installDescription')}
               </p>
               <div className="mt-3 flex gap-2">
                 <button
                   onClick={handleInstall}
-                  className="rounded-lg px-4 py-2 text-sm font-medium"
-                  style={{
-                    backgroundColor: 'var(--primary)',
-                    color: 'var(--primary-foreground)',
-                  }}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
                 >
                   {t('install')}
                 </button>
                 <button
                   onClick={handleDismiss}
-                  className="rounded-lg px-4 py-2 text-sm font-medium"
-                  style={{ color: 'var(--muted-foreground)' }}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground"
                 >
                   {t('dismiss')}
                 </button>
@@ -97,8 +93,8 @@ export function InstallPrompt() {
             </div>
             <button
               onClick={handleDismiss}
-              className="shrink-0 p-1"
-              style={{ color: 'var(--muted-foreground)' }}
+              className="shrink-0 p-1 text-muted-foreground"
+              aria-label={t('dismiss')}
             >
               <X className="h-4 w-4" />
             </button>
