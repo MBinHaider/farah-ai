@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { Link } from '@/i18n/routing'
+import { useRouter } from '@/i18n/routing'
 import { useMealPlan } from '@/hooks/use-meal-plan'
 import { useRecipes } from '@/hooks/use-recipes'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { motion } from 'framer-motion'
 import { Plus, X, ShoppingCart, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
-import Image from 'next/image'
 import type { DayOfWeek, MealSlot } from '@/types/meal-plan'
 
 const DAYS: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
@@ -44,6 +43,7 @@ const DAY_LABELS_AR: Record<DayOfWeek, string> = {
 export default function MealPlanPage() {
   const locale = useLocale()
   const t = useTranslations('plan')
+  const router = useRouter()
   const { mealPlan, addMeal, removeMeal } = useMealPlan()
   const { recipes } = useRecipes()
 
@@ -67,11 +67,6 @@ export default function MealPlanPage() {
     return locale === 'ar' && recipe.titleAr ? recipe.titleAr : recipe.title
   }
 
-  function getRecipeTime(recipeId: string) {
-    const recipe = getRecipe(recipeId)
-    if (!recipe) return 0
-    return recipe.prepTime + recipe.cookTime
-  }
 
   function openRecipePicker(day: DayOfWeek, slot: MealSlot) {
     setSelectedDay(day)
@@ -98,14 +93,14 @@ export default function MealPlanPage() {
     <div className="mx-auto max-w-lg space-y-4 pb-24 md:max-w-2xl">
       {/* Week navigation header */}
       <div className="flex items-center justify-between">
-        <button className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted/50">
+        <button disabled className="rounded-full p-2 text-muted-foreground/30 cursor-default">
           <ChevronLeft className="h-5 w-5" />
         </button>
         <div className="text-center">
           <h1 className="text-xl font-bold">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">{t('thisWeek')}</p>
         </div>
-        <button className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted/50">
+        <button disabled className="rounded-full p-2 text-muted-foreground/30 cursor-default">
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
@@ -137,15 +132,12 @@ export default function MealPlanPage() {
                       <div className="flex flex-1 items-center gap-2 rounded-xl bg-muted/40 p-2">
                         {/* Recipe thumbnail */}
                         {recipe.image && (
-                          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg">
-                            <Image
-                              src={recipe.image}
-                              alt={getRecipeTitle(meal.recipeId)}
-                              fill
-                              className="object-cover"
-                              sizes="36px"
-                            />
-                          </div>
+                          <img
+                            src={recipe.image}
+                            alt={getRecipeTitle(meal.recipeId)}
+                            className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                            loading="lazy"
+                          />
                         )}
                         <span className="flex-1 truncate text-sm font-medium">
                           {getRecipeTitle(meal.recipeId)}
@@ -175,15 +167,16 @@ export default function MealPlanPage() {
 
       {/* Sticky View Grocery List CTA */}
       <div className="fixed inset-x-0 bottom-16 z-40 px-4 pb-2 md:bottom-0 md:pb-4">
-        <Link href="/grocery" className="block mx-auto max-w-lg md:max-w-2xl">
+        <div className="mx-auto max-w-lg md:max-w-2xl">
           <motion.button
             whileTap={{ scale: 0.97 }}
+            onClick={() => router.push('/grocery' as never)}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg"
           >
             <ShoppingCart className="h-4 w-4" />
             {t('viewGroceryList')}
           </motion.button>
-        </Link>
+        </div>
       </div>
 
       {/* Recipe Picker BottomSheet */}
@@ -210,15 +203,12 @@ export default function MealPlanPage() {
                   className="flex w-full items-center gap-3 rounded-xl border border-border/50 p-3 text-start transition-colors hover:bg-muted/50"
                 >
                   {recipe.image && (
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg">
-                      <Image
-                        src={recipe.image}
-                        alt={title}
-                        fill
-                        className="object-cover"
-                        sizes="40px"
-                      />
-                    </div>
+                    <img
+                      src={recipe.image}
+                      alt={title}
+                      className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                      loading="lazy"
+                    />
                   )}
                   <span className="flex-1 truncate font-medium">{title}</span>
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">

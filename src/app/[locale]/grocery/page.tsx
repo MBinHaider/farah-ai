@@ -5,7 +5,7 @@ import { useGroceryList } from '@/hooks/use-grocery-list'
 import { toFraction } from '@/lib/utils/servings'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Check, Share2, ShoppingCart } from 'lucide-react'
-import { Link } from '@/i18n/routing'
+import { useRouter } from '@/i18n/routing'
 
 const CATEGORY_EMOJI: Record<string, string> = {
   produce: '\u{1F955}',
@@ -18,13 +18,32 @@ const CATEGORY_EMOJI: Record<string, string> = {
   other: '\u{1F4E6}',
 }
 
+const CATEGORY_LABELS_AR: Record<string, string> = {
+  produce: 'خضروات وفواكه',
+  protein: 'بروتين',
+  dairy: 'ألبان',
+  grain: 'حبوب',
+  spice: 'بهارات',
+  oil: 'زيوت',
+  sweetener: 'محليات',
+  other: 'أخرى',
+}
+
 function getCategoryEmoji(category: string): string {
   return CATEGORY_EMOJI[category.toLowerCase()] || CATEGORY_EMOJI.other
+}
+
+function getCategoryLabel(category: string, locale: string): string {
+  if (locale === 'ar') {
+    return CATEGORY_LABELS_AR[category.toLowerCase()] || category
+  }
+  return category
 }
 
 export default function GroceryListPage() {
   const locale = useLocale()
   const t = useTranslations('grocery')
+  const router = useRouter()
   const { items, toggleItem } = useGroceryList()
 
   // Group items by category
@@ -54,11 +73,12 @@ export default function GroceryListPage() {
     if (navigator.share) {
       try {
         await navigator.share({ title: t('title'), text })
-      } catch {
-        // User cancelled or share failed — fall back to clipboard
-        await navigator.clipboard.writeText(text)
+        return
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
       }
-    } else {
+    }
+    if (navigator.clipboard) {
       await navigator.clipboard.writeText(text)
     }
   }
@@ -68,14 +88,13 @@ export default function GroceryListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link href="/plan">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted/50"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </motion.button>
-          </Link>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.back()}
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted/50"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </motion.button>
           <h1 className="text-xl font-bold">{t('title')}</h1>
         </div>
         {items.length > 0 && (
@@ -124,7 +143,7 @@ export default function GroceryListPage() {
             >
               <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold capitalize text-muted-foreground">
                 <span>{getCategoryEmoji(category)}</span>
-                {category}
+                {getCategoryLabel(category, locale)}
               </h2>
               <div className="divide-y divide-border/40">
                 {grouped[category].map(({ item, index }) => {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useLocale, useTranslations } from 'next-intl'
-import { Link, useRouter, usePathname } from '@/i18n/routing'
+import { useRouter, usePathname } from '@/i18n/routing'
 import { useTheme } from 'next-themes'
 import { db } from '@/lib/db'
 import { motion } from 'framer-motion'
@@ -100,14 +100,13 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-lg space-y-6 pb-24 md:max-w-2xl">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Link href="/">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted/50"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </motion.button>
-        </Link>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => router.back()}
+          className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted/50"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </motion.button>
         <h1 className="text-xl font-bold">{t('title')}</h1>
       </div>
 
